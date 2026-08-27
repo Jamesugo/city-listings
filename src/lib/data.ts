@@ -2,7 +2,7 @@ import { createClient } from './supabase/server';
 import type { Category, State, City, Business, BusinessCard } from './types';
 
 // ============================================================
-// Helper functions — data access layer (Supabase Phase 2)
+// Helper functions — data access layer (Supabase Phase 2/3)
 // ============================================================
 
 export async function getCategories(): Promise<Category[]> {
@@ -99,34 +99,76 @@ export async function getCityBySlug(slug: string): Promise<City | undefined> {
   };
 }
 
+// ============================================================
+// Business listing — supports FTS, pagination, filters
+// ============================================================
+
+const PAGE_SIZE = 24;
+
 export async function getBusinesses(filters: {
   categorySlug?: string;
   citySlug?: string;
   featured?: boolean;
   limit?: number;
+  searchQuery?: string;
+  page?: number;
 } = {}): Promise<BusinessCard[]> {
   const supabase = await createClient();
+
+  const pageSize = filters.limit ?? PAGE_SIZE;
+  const page = filters.page ?? 1;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  // Two-step lookups to avoid invalid PostgREST dot-notation filter
+  let categoryId: string | undefined;
+  if (filters.categorySlug) {
+    const { data: cat } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', filters.categorySlug)
+      .single();
+    categoryId = cat?.id;
+    // If slug not found, return nothing
+    if (!categoryId) return [];
+  }
+
+  let cityId: string | undefined;
+  if (filters.citySlug) {
+    const { data: city } = await supabase
+      .from('cities')
+      .select('id')
+      .eq('slug', filters.citySlug)
+      .single();
+    cityId = city?.id;
+    if (!cityId) return [];
+  }
+
   let query = supabase
     .from('businesses')
     .select(`
-      *,
+      id, name, slug, address, phone, whatsapp,
+      verification_tier, is_featured, cover_image_url, last_confirmed_at,
+      category_id, city_id,
       categories!inner(name, slug),
-      cities!inner(name, slug, states(name))
+      cities!inner(name, slug, states(name)),
+      reviews(rating)
     `)
     .eq('is_active', true)
-    .order('created_at', { ascending: false });
+    .order('is_featured', { ascending: false })
+    .order('created_at', { ascending: false })
+    .range(from, to);
 
-  if (filters.categorySlug) {
-    query = query.eq('categories.slug', filters.categorySlug);
-  }
-  if (filters.citySlug) {
-    query = query.eq('cities.slug', filters.citySlug);
-  }
-  if (filters.featured !== undefined) {
-    query = query.eq('is_featured', filters.featured);
-  }
-  if (filters.limit) {
-    query = query.limit(filters.limit);
+  if (categoryId) query = query.eq('category_id', categoryId);
+  if (cityId) query = query.eq('city_id', cityId);
+  if (filters.featured !== undefined) query = query.eq('is_featured', filters.featured);
+
+  // Server-side full-text search using the search_vector GIN index
+  if (filters.searchQuery && filters.searchQuery.trim()) {
+    query = (query as any).textSearch('search_vector', filters.searchQuery.trim(), {
+      type: 'websearch',
+      config: 'english',
+    });
   }
 
   const { data, error } = await query;
@@ -136,24 +178,34 @@ export async function getBusinesses(filters: {
     return [];
   }
 
-  return data.map((b: any) => ({
-    id: b.id,
-    name: b.name,
-    slug: b.slug,
-    categoryName: b.categories.name,
-    categorySlug: b.categories.slug,
-    cityName: b.cities.name,
-    citySlug: b.cities.slug,
-    stateName: b.cities.states?.name || '',
-    address: b.address,
-    phone: b.phone,
-    whatsapp: b.whatsapp,
-    verificationTier: b.verification_tier,
-    isFeatured: b.is_featured,
-    coverImageUrl: b.cover_image_url,
-    averageRating: b.averageRating || 0,
-    reviewCount: b.reviewCount || 0,
-  }));
+  return data.map((b: any) => {
+    const ratings: number[] = b.reviews?.map((r: any) => r.rating) ?? [];
+    const reviewCount = ratings.length;
+    const averageRating =
+      reviewCount > 0
+        ? Math.round((ratings.reduce((s: number, r: number) => s + r, 0) / reviewCount) * 10) / 10
+        : 0;
+
+    return {
+      id: b.id,
+      name: b.name,
+      slug: b.slug,
+      categoryName: (b.categories as any).name,
+      categorySlug: (b.categories as any).slug,
+      cityName: (b.cities as any).name,
+      citySlug: (b.cities as any).slug,
+      stateName: (b.cities as any).states?.name || '',
+      address: b.address,
+      phone: b.phone,
+      whatsapp: b.whatsapp,
+      verificationTier: b.verification_tier,
+      isFeatured: b.is_featured,
+      coverImageUrl: b.cover_image_url,
+      averageRating,
+      reviewCount,
+      lastConfirmedAt: b.last_confirmed_at,
+    };
+  });
 }
 
 // Full Business[] fetch for the admin dashboard (includes inactive + all fields)
@@ -209,12 +261,20 @@ export async function getBusinessBySlug(slug: string): Promise<Business | undefi
     .select(`
       *,
       categories(name, slug),
-      cities(name, slug, states(id, name))
+      cities(name, slug, states(id, name)),
+      reviews(rating)
     `)
     .eq('slug', slug)
     .single();
 
   if (error || !data) return undefined;
+
+  const ratings: number[] = (data.reviews ?? []).map((r: any) => r.rating);
+  const reviewCount = ratings.length;
+  const averageRating =
+    reviewCount > 0
+      ? Math.round((ratings.reduce((s: number, r: number) => s + r, 0) / reviewCount) * 10) / 10
+      : 0;
 
   return {
     id: data.id,
@@ -245,8 +305,8 @@ export async function getBusinessBySlug(slug: string): Promise<Business | undefi
     updatedAt: data.updated_at,
     pageViews: data.page_views || 0,
     whatsappClicks: data.whatsapp_clicks || 0,
-    averageRating: data.averageRating || 0,
-    reviewCount: data.reviewCount || 0,
+    averageRating,
+    reviewCount,
   };
 }
 
@@ -263,8 +323,44 @@ export async function getReviews(businessId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from('reviews')
-    .select('id, rating, body, created_at, users(email)')
+    .select('id, rating, body, owner_response, created_at, users(email)')
     .eq('business_id', businessId)
     .order('created_at', { ascending: false });
   return data || [];
+}
+
+export async function getBusinessCount(filters: {
+  categorySlug?: string;
+  citySlug?: string;
+  searchQuery?: string;
+} = {}): Promise<number> {
+  const supabase = await createClient();
+
+  let categoryId: string | undefined;
+  if (filters.categorySlug) {
+    const { data: cat } = await supabase.from('categories').select('id').eq('slug', filters.categorySlug).single();
+    categoryId = cat?.id;
+    if (!categoryId) return 0;
+  }
+
+  let cityId: string | undefined;
+  if (filters.citySlug) {
+    const { data: city } = await supabase.from('cities').select('id').eq('slug', filters.citySlug).single();
+    cityId = city?.id;
+    if (!cityId) return 0;
+  }
+
+  let query = supabase.from('businesses').select('id', { count: 'exact', head: true }).eq('is_active', true);
+
+  if (categoryId) query = query.eq('category_id', categoryId);
+  if (cityId) query = query.eq('city_id', cityId);
+  if (filters.searchQuery?.trim()) {
+    query = (query as any).textSearch('search_vector', filters.searchQuery.trim(), {
+      type: 'websearch',
+      config: 'english',
+    });
+  }
+
+  const { count } = await query;
+  return count ?? 0;
 }

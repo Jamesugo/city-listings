@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useTransition, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Business, Category, City } from '@/lib/types';
-import { upsertBusiness } from './actions';
+import { upsertBusiness, deleteBusiness, toggleFeatured } from './actions';
 import { uploadMedia, deleteMedia } from './upload';
 import { logout } from './login/actions';
 import styles from './page.module.css';
@@ -23,11 +24,19 @@ export default function AdminDashboard({
   const [businesses] = useState<Business[]>(initialBusinesses);
   const isOwner = userRole !== 'admin';
   const hasBusiness = businesses.length > 0;
+  const router = useRouter();
   
   // Auto-open form for owners
   const [editingId, setEditingId] = useState<string | null>(isOwner && hasBusiness ? businesses[0].id : null);
   const [showForm, setShowForm] = useState(isOwner ? true : false);
+  const [activeTab, setActiveTab] = useState<'listings' | 'analytics'>('listings');
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const showToast = (type: 'success' | 'error', msg: string) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 4000);
+  };
   
   // Media state
   const [coverPreview, setCoverPreview] = useState<string | null>(
@@ -141,19 +150,59 @@ export default function AdminDashboard({
       const result = await upsertBusiness(dbData);
       
       if (result.error) {
-        alert('Error saving business: ' + result.error);
+        showToast('error', 'Error saving business: ' + result.error);
       } else {
-        alert(`Business "${formData.name}" saved successfully!`);
+        showToast('success', `"${formData.name}" saved successfully!`);
         resetForm();
+        router.refresh();
       }
     });
-  }, [editingId, formData, resetForm]);
+  }, [editingId, formData, resetForm, router]);
+
+  const handleDelete = useCallback((id: string, name: string) => {
+    if (!confirm(`Are you sure you want to deactivate "${name}"? It will be hidden from public listings.`)) return;
+    startTransition(async () => {
+      const result = await deleteBusiness(id);
+      if (result.error) {
+        showToast('error', result.error);
+      } else {
+        showToast('success', `"${name}" has been deactivated.`);
+        router.refresh();
+      }
+    });
+  }, [router]);
+
+  const handleToggleFeatured = useCallback((id: string, current: boolean, name: string) => {
+    startTransition(async () => {
+      const result = await toggleFeatured(id, current);
+      if (result.error) {
+        showToast('error', result.error);
+      } else {
+        showToast('success', `"${name}" ${current ? 'unfeatured' : 'featured'}.`);
+        router.refresh();
+      }
+    });
+  }, [router]);
 
   // ----------------------------------------------------------------
   // Admin Dashboard
   // ----------------------------------------------------------------
   return (
     <div className={styles.page}>
+      {/* Toast notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9999,
+          padding: '0.875rem 1.25rem', borderRadius: 'var(--radius-lg)',
+          background: toast.type === 'success' ? '#dcfce7' : '#fee2e2',
+          color: toast.type === 'success' ? '#15803d' : '#b91c1c',
+          boxShadow: 'var(--shadow-lg)', fontWeight: 600, fontSize: '0.9rem',
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
+          animation: 'fadeInUp 0.2s ease',
+        }}>
+          {toast.type === 'success' ? '✅' : '❌'} {toast.msg}
+        </div>
+      )}
       <div className={styles.header}>
         <div className="container">
           <div className={styles.headerRow}>
@@ -234,6 +283,7 @@ export default function AdminDashboard({
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value, slug: slugify(e.target.value) })}
                     required
+                    minLength={3}
                     placeholder="e.g. Mama Ngozi's Kitchen"
                   />
                 </div>
@@ -290,10 +340,13 @@ export default function AdminDashboard({
                   <label htmlFor="biz-phone" className="form-label">Phone *</label>
                   <input
                     id="biz-phone"
+                    type="tel"
                     className="form-input"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     required
+                    pattern="^\+?[0-9\s\-()]{7,15}$"
+                    title="Enter a valid phone number, e.g., +2348012345678"
                     placeholder="+2348012345678"
                   />
                 </div>
@@ -301,9 +354,12 @@ export default function AdminDashboard({
                   <label htmlFor="biz-whatsapp" className="form-label">WhatsApp Number</label>
                   <input
                     id="biz-whatsapp"
+                    type="tel"
                     className="form-input"
                     value={formData.whatsapp}
                     onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                    pattern="^[0-9]{10,15}$"
+                    title="Enter a valid WhatsApp number without +, e.g., 2348012345678"
                     placeholder="2348012345678 (no +)"
                   />
                 </div>
@@ -337,6 +393,7 @@ export default function AdminDashboard({
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     required
+                    minLength={20}
                     rows={4}
                     placeholder="Describe the business, services offered, etc."
                   />
@@ -539,8 +596,65 @@ export default function AdminDashboard({
           </div>
         )}
 
-        {/* Listings table (Admins only) */}
+        {/* Tab switcher (Admins only) */}
         {!isOwner && (
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '2px solid var(--color-border-light)', paddingBottom: '0' }}>
+            <button
+              className={`btn btn-sm ${activeTab === 'listings' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setActiveTab('listings')}
+              id="tab-listings"
+              style={{ borderRadius: '0.5rem 0.5rem 0 0', marginBottom: '-2px', borderBottom: activeTab === 'listings' ? '2px solid var(--color-primary)' : '2px solid transparent' }}
+            >
+              📋 Listings ({businesses.length})
+            </button>
+            <button
+              className={`btn btn-sm ${activeTab === 'analytics' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setActiveTab('analytics')}
+              id="tab-analytics"
+              style={{ borderRadius: '0.5rem 0.5rem 0 0', marginBottom: '-2px', borderBottom: activeTab === 'analytics' ? '2px solid var(--color-primary)' : '2px solid transparent' }}
+            >
+              📊 Analytics
+            </button>
+          </div>
+        )}
+
+        {/* Analytics tab (Admins only) */}
+        {!isOwner && activeTab === 'analytics' && (
+          <div className={styles.tableCard}>
+            <h2 className={styles.tableTitle}>Analytics Overview</h2>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Business</th>
+                    <th>City</th>
+                    <th style={{ textAlign: 'right' }}>👁 Page Views</th>
+                    <th style={{ textAlign: 'right' }}>💬 WA Clicks</th>
+                    <th style={{ textAlign: 'right' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...businesses].sort((a, b) => (b.pageViews || 0) - (a.pageViews || 0)).map((biz) => (
+                    <tr key={biz.id} className={!biz.isActive ? styles.inactive : undefined}>
+                      <td><strong>{biz.name}</strong>{biz.isFeatured && <span className={styles.featuredPill}>⭐</span>}</td>
+                      <td>{biz.cityName}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{(biz.pageViews || 0).toLocaleString()}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-primary)' }}>{(biz.whatsappClicks || 0).toLocaleString()}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span className={`badge ${biz.isActive ? 'badge-green' : 'badge-gray'}`}>
+                          {biz.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Listings table (Admins only) */}
+        {!isOwner && activeTab === 'listings' && (
           <div className={styles.tableCard}>
             <h2 className={styles.tableTitle}>All Listings ({businesses.length})</h2>
             <div className={styles.tableWrapper}>
@@ -586,8 +700,18 @@ export default function AdminDashboard({
                             className="btn btn-ghost btn-sm"
                             onClick={() => handleEdit(biz)}
                             aria-label={`Edit ${biz.name}`}
+                            title="Edit"
                           >
                             <Edit2 size={16} />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleToggleFeatured(biz.id, biz.isFeatured, biz.name)}
+                            aria-label={biz.isFeatured ? `Unfeature ${biz.name}` : `Feature ${biz.name}`}
+                            title={biz.isFeatured ? 'Remove from featured' : 'Mark as featured'}
+                            style={{ color: biz.isFeatured ? 'var(--color-accent)' : undefined }}
+                          >
+                            <Star size={16} />
                           </button>
                           <a
                             href={`/businesses/${biz.slug}`}
@@ -595,9 +719,22 @@ export default function AdminDashboard({
                             rel="noopener noreferrer"
                             className="btn btn-ghost btn-sm"
                             aria-label={`View ${biz.name}`}
+                            title="View public page"
                           >
                             <Eye size={16} />
                           </a>
+                          {biz.isActive && (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => handleDelete(biz.id, biz.name)}
+                              aria-label={`Deactivate ${biz.name}`}
+                              title="Deactivate (soft delete)"
+                              style={{ color: 'var(--color-error)' }}
+                              disabled={isPending}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

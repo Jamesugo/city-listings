@@ -167,6 +167,18 @@ export default async function BusinessDetailPage({
             )}
           </div>
 
+          {/* Gallery strip */}
+          {biz.gallery && biz.gallery.length > 0 && (
+            <div className={styles.galleryStrip} aria-label="Photo gallery">
+              {biz.gallery.map((url, i) => (
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className={styles.galleryThumb}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`${biz.name} photo ${i + 1}`} className={styles.galleryImg} loading="lazy" />
+                </a>
+              ))}
+            </div>
+          )}
+
           {/* Header */}
           <div className={styles.bizHeader}>
             <div className={styles.bizMeta}>
@@ -227,15 +239,21 @@ export default async function BusinessDetailPage({
             {reviews.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {reviews.map((r: any) => (
-                  <div key={r.id} style={{ padding: '1rem', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <strong>{r.users?.email?.split('@')[0] || 'User'}</strong>
+                  <div key={r.id} className={styles.reviewCard}>
+                    <div className={styles.reviewHeader}>
+                      <strong className={styles.reviewAuthor}>{r.users?.email?.split('@')[0] || 'User'}</strong>
                       <StarRating rating={r.rating} />
                     </div>
-                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>{r.body}</p>
-                    <small style={{ color: 'var(--color-text-tertiary)', marginTop: '0.5rem', display: 'block' }}>
-                      {new Date(r.created_at).toLocaleDateString()}
+                    <p className={styles.reviewBody}>{r.body}</p>
+                    <small className={styles.reviewDate}>
+                      {new Date(r.created_at).toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </small>
+                    {r.owner_response && (
+                      <div className={styles.ownerResponse}>
+                        <p className={styles.ownerResponseLabel}>🏢 Owner's Response</p>
+                        <p className={styles.ownerResponseBody}>{r.owner_response}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

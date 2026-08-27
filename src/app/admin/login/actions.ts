@@ -69,3 +69,18 @@ export async function logout() {
   await supabase.auth.signOut();
   return redirect('/admin/login');
 }
+
+export async function resetPassword(formData: FormData) {
+  const email = formData.get('email') as string;
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/admin/update-password`,
+  });
+
+  if (error) {
+    return redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
+  }
+
+  return redirect(`/admin/login?message=${encodeURIComponent('Password reset link sent to your email.')}`);
+}

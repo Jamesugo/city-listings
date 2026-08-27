@@ -1,14 +1,53 @@
 'use client';
 
 import { useState } from 'react';
-import { login, signup } from './actions';
+import { useFormStatus } from 'react-dom';
+import { useRouter, usePathname } from 'next/navigation';
+import { login, signup, resetPassword } from './actions';
 import styles from '../page.module.css';
-import { Lock, Sparkles, ClipboardList, Eye } from '@/components/Icons';
+import { Lock, Sparkles, Loader2 } from '@/components/Icons';
+
+function SubmitButton({ mode }: { mode: 'login' | 'signup' | 'forgot' }) {
+  const { pending } = useFormStatus();
+  
+  const action = mode === 'login' ? login : mode === 'signup' ? signup : resetPassword;
+  const loadingText = mode === 'login' ? 'Signing In...' : mode === 'signup' ? 'Creating Account...' : 'Sending Link...';
+  const text = mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Send Reset Link';
+
+  return (
+    <button 
+      formAction={action} 
+      className="btn btn-primary" 
+      disabled={pending}
+      style={{ width: '100%', padding: '0.875rem', fontSize: '1rem', fontWeight: 600, transition: 'all 0.2s ease', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
+    >
+      {pending ? (
+        <>
+          <Loader2 className="animate-spin" size={18} /> 
+          {loadingText}
+        </>
+      ) : (
+        text
+      )}
+    </button>
+  );
+}
 
 export default function LoginForm({ error, message }: { error?: string; message?: string }) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
+  const router = useRouter();
+  const pathname = usePathname();
   
   const isLogin = mode === 'login';
+  const isSignup = mode === 'signup';
+  const isForgot = mode === 'forgot';
+
+  const toggleMode = () => {
+    setMode(isLogin ? 'signup' : 'login');
+    if (error || message) {
+      router.replace(pathname); // Clears the query params
+    }
+  };
 
   return (
     <div className={styles.loginWrapper}>
@@ -17,10 +56,10 @@ export default function LoginForm({ error, message }: { error?: string; message?
           {isLogin ? <Lock className={styles.iconElement} size={28} /> : <Sparkles className={styles.iconElement} size={28} />}
         </div>
         <h1 className={styles.loginTitle}>
-          {isLogin ? 'Welcome Back' : 'Create an Account'}
+          {isLogin ? 'Welcome Back' : isSignup ? 'Create an Account' : 'Reset Password'}
         </h1>
         <p className={styles.loginDesc}>
-          {isLogin ? 'Sign in to manage your business listings.' : 'Join NaijaList to discover or list your business.'}
+          {isLogin ? 'Sign in to manage your business listings.' : isSignup ? 'Join NaijaList to discover or list your business.' : 'Enter your email and we will send you a reset link.'}
         </p>
         
         {error && (
@@ -36,7 +75,7 @@ export default function LoginForm({ error, message }: { error?: string; message?
         )}
 
         {/* Account Type — only shown during signup */}
-        {!isLogin && (
+        {isSignup && (
           <div className="form-group">
             <label htmlFor="accountType" className="form-label">I want to…</label>
             <select
@@ -65,35 +104,46 @@ export default function LoginForm({ error, message }: { error?: string; message?
           />
         </div>
         
-        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-          <label htmlFor="password" className="form-label">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            className="form-input"
-            required
-            autoComplete="new-password"
-            style={{ padding: '0.75rem' }}
-          />
-        </div>
+        {!isForgot && (
+          <div className="form-group" style={{ marginBottom: isLogin ? '0.5rem' : '1.5rem' }}>
+            <label htmlFor="password" className="form-label">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              className="form-input"
+              required={!isForgot}
+              minLength={6}
+              autoComplete="new-password"
+              style={{ padding: '0.75rem' }}
+            />
+          </div>
+        )}
+
+        {isLogin && (
+          <div style={{ textAlign: 'right', marginBottom: '1.5rem' }}>
+            <button
+              type="button"
+              onClick={() => { setMode('forgot'); if (error || message) router.replace(pathname); }}
+              style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.85rem', cursor: 'pointer', padding: '0.25rem 0' }}
+            >
+              Forgot Password?
+            </button>
+          </div>
+        )}
         
-        <button 
-          formAction={isLogin ? login : signup} 
-          className="btn btn-primary" 
-          style={{ width: '100%', padding: '0.875rem', fontSize: '1rem', fontWeight: 600, transition: 'all 0.2s ease' }}
-        >
-          {isLogin ? 'Sign In' : 'Create Account'}
-        </button>
+        {isForgot && <div style={{ marginBottom: '1.5rem' }} />}
+        
+        <SubmitButton mode={mode} />
         
         <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.95rem', color: 'var(--color-text-secondary)' }}>
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          {isSignup ? "Already have an account? " : isForgot ? "Remember your password? " : "Don't have an account? "}
           <button 
             type="button"
-            onClick={() => setMode(isLogin ? 'signup' : 'login')}
+            onClick={() => { setMode(isSignup || isForgot ? 'login' : 'signup'); if (error || message) router.replace(pathname); }}
             style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: 600, cursor: 'pointer', padding: '0.25rem' }}
           >
-            {isLogin ? 'Sign up for free' : 'Log in instead'}
+            {isSignup || isForgot ? 'Log in instead' : 'Sign up for free'}
           </button>
         </div>
       </form>

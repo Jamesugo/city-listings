@@ -70,7 +70,7 @@ export default function Navbar() {
               <Link href="/admin/login" className={styles.link} id="nav-signin" style={{ marginRight: '0.5rem' }}>
                 Sign In
               </Link>
-              <Link href="/admin" className="btn btn-outline btn-sm" id="nav-list-business">
+              <Link href="/list-business" className="btn btn-outline btn-sm" id="nav-list-business">
                 List Your Business
               </Link>
             </>
@@ -114,7 +114,7 @@ export default function Navbar() {
               <Link href="/admin/login" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
                 <KeyRound size={18} /> Sign In
               </Link>
-              <Link href="/admin" className={`${styles.mobileLink} ${styles.mobileCta}`} onClick={closeMenu} role="menuitem">
+              <Link href="/list-business" className={`${styles.mobileLink} ${styles.mobileCta}`} onClick={closeMenu} role="menuitem">
                 <Plus size={18} /> List Your Business
               </Link>
             </>
