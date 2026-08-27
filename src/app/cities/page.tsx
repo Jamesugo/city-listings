@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   description: 'Browse local businesses by city across Enugu State, Nigeria. Enugu, Nsukka, Awgu, Oji River, Agbani and more.',
 };
 
-export default function CitiesPage() {
-  const cities = getCities();
+export default async function CitiesPage() {
+  const cities = await getCities();
 
   return (
     <div className={styles.page}>

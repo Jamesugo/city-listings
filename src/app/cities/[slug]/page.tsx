@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { getCityBySlug, getBusinesses, CITIES } from '@/lib/data';
+import { getCityBySlug, getBusinesses, getCities } from '@/lib/data';
+import { createBuildClient } from '@/lib/supabase/build-client';
 import type { City } from '@/lib/types';
 import BusinessCardComponent from '@/components/BusinessCardComponent';
 
@@ -11,7 +12,9 @@ const getCity = cache(async (slug: string): Promise<City | undefined> => {
 });
 
 export async function generateStaticParams() {
-  return CITIES.map((c) => ({ slug: c.slug }));
+  const supabase = createBuildClient();
+  const { data } = await supabase.from('cities').select('slug');
+  return (data ?? []).map((c: { slug: string }) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({
@@ -38,7 +41,7 @@ export default async function CityDetailPage({
   const city = await getCity(slug);
   if (!city) notFound();
 
-  const businesses = getBusinesses({ citySlug: slug });
+  const businesses = await getBusinesses({ citySlug: slug });
 
   return (
     <div style={{ paddingBottom: 'var(--space-16)' }}>

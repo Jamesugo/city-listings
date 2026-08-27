@@ -23,7 +23,7 @@ export default async function BusinessesPage({
 }) {
   const { q, category, city, featured } = await searchParams;
 
-  let businesses = getBusinesses({
+  let businesses = await getBusinesses({
     categorySlug: category,
     citySlug: city,
     featured: featured === 'true' ? true : undefined,

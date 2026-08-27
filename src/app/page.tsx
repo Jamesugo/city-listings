@@ -10,10 +10,10 @@ export const metadata: Metadata = {
     'Discover trusted local businesses in Enugu State, Nigeria. Restaurants, clinics, professionals, shops and more — with WhatsApp contact, verified listings, and real reviews.',
 };
 
-export default function HomePage() {
-  const categories = getCategories();
-  const cities = getCities();
-  const featured = getFeaturedBusinesses(6);
+export default async function HomePage() {
+  const categories = await getCategories();
+  const cities = await getCities();
+  const featured = await getFeaturedBusinesses(6);
 
   return (
     <>

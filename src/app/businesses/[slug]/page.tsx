@@ -2,12 +2,18 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { getBusinessBySlug, getRelatedBusinesses, BUSINESSES } from '@/lib/data';
+import { getBusinessBySlug, getRelatedBusinesses, getBusinesses } from '@/lib/data';
+import { createBuildClient } from '@/lib/supabase/build-client';
 import type { Business, BusinessHours } from '@/lib/types';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import StarRating from '@/components/StarRating';
 import BusinessCardComponent from '@/components/BusinessCardComponent';
+import ReviewForm from './ReviewForm';
+import { getReviews } from '@/lib/data';
+import { createClient } from '@/lib/supabase/server';
 import styles from './page.module.css';
+import BusinessClientTracker from './BusinessClientTracker';
+import WhatsappClientLink from './WhatsappClientLink';
 
 // Memoize data fetch so it only runs once per request even if called
 // from both generateMetadata and the page component
@@ -17,7 +23,9 @@ const getBusiness = cache(async (slug: string): Promise<Business | undefined> =>
 
 // Generate static paths at build time for all active businesses
 export async function generateStaticParams() {
-  return BUSINESSES.filter((b) => b.isActive).map((b) => ({ slug: b.slug }));
+  const supabase = createBuildClient();
+  const { data } = await supabase.from('businesses').select('slug').eq('is_active', true);
+  return (data ?? []).map((b: { slug: string }) => ({ slug: b.slug }));
 }
 
 // Per-listing dynamic metadata
@@ -116,12 +124,19 @@ export default async function BusinessDetailPage({
   const biz = await getBusiness(slug);
   if (!biz) notFound();
 
-  const related = getRelatedBusinesses(biz, 3);
+  const related = await getRelatedBusinesses(biz, 3);
+  const reviews = await getReviews(biz.id);
+  
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const isAuthenticated = !!user;
+
   const waUrl = biz.whatsapp ? `https://wa.me/${biz.whatsapp}?text=Hello%20${encodeURIComponent(biz.name)}%2C%20I%20found%20you%20on%20NaijaList%20and%20would%20like%20to%20enquire%20about%20your%20services.` : null;
   const emoji = CATEGORY_EMOJI[biz.categorySlug] ?? '🏢';
 
   return (
     <>
+      <BusinessClientTracker businessId={biz.id} />
       <LocalBusinessJsonLd biz={biz} />
 
       {/* Breadcrumb */}
@@ -206,20 +221,33 @@ export default async function BusinessDetailPage({
             </section>
           )}
 
-          {/* Reviews placeholder */}
           <section className={styles.section} aria-labelledby="reviews-heading">
             <h2 id="reviews-heading" className={styles.sectionTitle}>Customer Reviews</h2>
-            <div className={styles.reviewsPlaceholder}>
-              <span className={styles.reviewsIcon} aria-hidden="true">⭐</span>
-              <p className={styles.reviewsTitle}>
-                {biz.reviewCount && biz.reviewCount > 0
-                  ? `${biz.reviewCount} review${biz.reviewCount !== 1 ? 's' : ''} — more details coming soon`
-                  : 'Be the first to review this business'}
-              </p>
-              <p className={styles.reviewsDesc}>
-                Reviews and ratings will be enabled in Phase 2. Contact the business on WhatsApp to share your experience.
-              </p>
-            </div>
+            
+            {reviews.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {reviews.map((r: any) => (
+                  <div key={r.id} style={{ padding: '1rem', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <strong>{r.users?.email?.split('@')[0] || 'User'}</strong>
+                      <StarRating rating={r.rating} />
+                    </div>
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>{r.body}</p>
+                    <small style={{ color: 'var(--color-text-tertiary)', marginTop: '0.5rem', display: 'block' }}>
+                      {new Date(r.created_at).toLocaleDateString()}
+                    </small>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.reviewsPlaceholder}>
+                <span className={styles.reviewsIcon} aria-hidden="true">⭐</span>
+                <p className={styles.reviewsTitle}>No reviews yet</p>
+                <p className={styles.reviewsDesc}>Be the first to review this business!</p>
+              </div>
+            )}
+
+            <ReviewForm businessId={biz.id} slug={biz.slug} isAuthenticated={isAuthenticated} />
           </section>
         </main>
 
@@ -230,10 +258,9 @@ export default async function BusinessDetailPage({
 
             {/* WhatsApp — PRIMARY CTA */}
             {waUrl && (
-              <a
+              <WhatsappClientLink
+                businessId={biz.id}
                 href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
                 className={`btn btn-whatsapp ${styles.contactBtn}`}
                 id="biz-whatsapp-cta"
                 aria-label={`Chat with ${biz.name} on WhatsApp`}
@@ -242,7 +269,7 @@ export default async function BusinessDetailPage({
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                 </svg>
                 Chat on WhatsApp
-              </a>
+              </WhatsappClientLink>
             )}
 
             {/* Phone */}

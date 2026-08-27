@@ -2,9 +2,10 @@ import Link from 'next/link';
 import styles from './Footer.module.css';
 import { getCategories, getCities } from '@/lib/data';
 
-export default function Footer() {
-  const categories = getCategories().slice(0, 8);
-  const cities = getCities();
+export default async function Footer() {
+  const allCategories = await getCategories();
+  const categories = allCategories.slice(0, 8);
+  const cities = await getCities();
 
   return (
     <footer className={styles.footer} role="contentinfo">

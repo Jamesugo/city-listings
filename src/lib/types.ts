@@ -62,6 +62,8 @@ export interface Business {
   lastConfirmedAt?: string; // ISO date string
   createdAt: string;
   updatedAt: string;
+  pageViews?: number;
+  whatsappClicks?: number;
   // Phase 2+
   averageRating?: number;
   reviewCount?: number;

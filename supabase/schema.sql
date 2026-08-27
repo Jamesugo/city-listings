@@ -62,6 +62,8 @@ CREATE TABLE businesses (
   cover_image_url TEXT,
   gallery TEXT[] DEFAULT '{}',
   last_confirmed_at TIMESTAMPTZ,
+  page_views INTEGER DEFAULT 0,
+  whatsapp_clicks INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -97,28 +99,28 @@ CREATE TRIGGER businesses_updated_at
 -- PHASE 2+ TABLES (uncomment when ready)
 -- ================================================================
 
--- -- USERS (for business owners and reviewers)
--- CREATE TABLE users (
---   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
---   email TEXT UNIQUE,
---   phone TEXT,
---   role TEXT DEFAULT 'user' CHECK (role IN ('user', 'owner', 'admin')),
---   business_id UUID REFERENCES businesses(id) ON DELETE SET NULL,
---   created_at TIMESTAMPTZ DEFAULT now()
--- );
+-- USERS (for business owners and reviewers)
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT UNIQUE,
+  phone TEXT,
+  role TEXT DEFAULT 'user' CHECK (role IN ('user', 'owner', 'admin')),
+  business_id UUID REFERENCES businesses(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
--- -- REVIEWS
--- CREATE TABLE reviews (
---   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
---   business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
---   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
---   rating INTEGER CHECK (rating >= 1 AND rating <= 5),
---   body TEXT DEFAULT '',
---   owner_response TEXT,
---   is_flagged BOOLEAN DEFAULT false,
---   created_at TIMESTAMPTZ DEFAULT now(),
---   UNIQUE (business_id, user_id) -- one review per user per business
--- );
+-- REVIEWS
+CREATE TABLE reviews (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  body TEXT DEFAULT '',
+  owner_response TEXT,
+  is_flagged BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (business_id, user_id) -- one review per user per business
+);
 
 -- ================================================================
 -- SEED: Enugu State

@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   description: 'Find Nigerian businesses by category — restaurants, clinics, salons, mechanics, lawyers, tech services and more across Enugu State.',
 };
 
-export default function CategoriesPage() {
-  const categories = getCategories();
+export default async function CategoriesPage() {
+  const categories = await getCategories();
 
   return (
     <div className={styles.page}>

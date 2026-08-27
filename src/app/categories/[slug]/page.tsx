@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { getCategoryBySlug, getBusinesses, CATEGORIES } from '@/lib/data';
+import { getCategoryBySlug, getBusinesses, getCategories } from '@/lib/data';
+import { createBuildClient } from '@/lib/supabase/build-client';
 import type { Category } from '@/lib/types';
 import BusinessCardComponent from '@/components/BusinessCardComponent';
 
@@ -11,7 +12,9 @@ const getCategory = cache(async (slug: string): Promise<Category | undefined> =>
 });
 
 export async function generateStaticParams() {
-  return CATEGORIES.map((c) => ({ slug: c.slug }));
+  const supabase = createBuildClient();
+  const { data } = await supabase.from('categories').select('slug');
+  return (data ?? []).map((c: { slug: string }) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({
@@ -38,7 +41,7 @@ export default async function CategoryDetailPage({
   const cat = await getCategory(slug);
   if (!cat) notFound();
 
-  const businesses = getBusinesses({ categorySlug: slug });
+  const businesses = await getBusinesses({ categorySlug: slug });
 
   return (
     <div style={{ paddingBottom: 'var(--space-16)' }}>
