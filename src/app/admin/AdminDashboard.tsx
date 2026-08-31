@@ -13,22 +13,17 @@ export default function AdminDashboard({
   initialBusinesses,
   categories,
   cities,
-  userRole,
 }: {
   initialBusinesses: Business[];
   categories: Category[];
   cities: City[];
-  userRole: string;
 }) {
   // Business list state
   const [businesses] = useState<Business[]>(initialBusinesses);
-  const isOwner = userRole !== 'admin';
-  const hasBusiness = businesses.length > 0;
   const router = useRouter();
   
-  // Auto-open form for owners
-  const [editingId, setEditingId] = useState<string | null>(isOwner && hasBusiness ? businesses[0].id : null);
-  const [showForm, setShowForm] = useState(isOwner ? true : false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'listings' | 'analytics'>('listings');
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -39,32 +34,14 @@ export default function AdminDashboard({
   };
   
   // Media state
-  const [coverPreview, setCoverPreview] = useState<string | null>(
-    isOwner && hasBusiness ? businesses[0].coverImageUrl || null : null
-  );
-  const [galleryPreviews, setGalleryPreviews] = useState<string[]>(
-    isOwner && hasBusiness ? businesses[0].gallery || [] : []
-  );
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
-  const defaultFormData = isOwner && hasBusiness ? {
-    name: businesses[0].name,
-    slug: businesses[0].slug,
-    categoryId: businesses[0].categoryId,
-    cityId: businesses[0].cityId,
-    address: businesses[0].address,
-    phone: businesses[0].phone,
-    whatsapp: businesses[0].whatsapp ?? '',
-    email: businesses[0].email ?? '',
-    website: businesses[0].website ?? '',
-    description: businesses[0].description,
-    isFeatured: businesses[0].isFeatured,
-    isActive: businesses[0].isActive,
-    verificationTier: businesses[0].verificationTier,
-  } : {
+  const defaultFormData = {
     name: '',
     slug: '',
     categoryId: categories[0]?.id ?? '',
@@ -78,6 +55,7 @@ export default function AdminDashboard({
     isFeatured: false,
     isActive: true,
     verificationTier: 'none' as 'none' | 'phone' | 'cac',
+    hours: { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' } as Record<string, string>,
   };
 
   const [formData, setFormData] = useState(defaultFormData);
@@ -100,6 +78,7 @@ export default function AdminDashboard({
       isFeatured: false,
       isActive: true,
       verificationTier: 'none',
+      hours: { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' },
     });
     setEditingId(null);
     setShowForm(false);
@@ -120,6 +99,7 @@ export default function AdminDashboard({
       isFeatured: biz.isFeatured,
       isActive: biz.isActive,
       verificationTier: biz.verificationTier,
+      hours: (biz.hours as Record<string, string>) || { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' },
     });
     setEditingId(biz.id);
     setShowForm(true);
@@ -145,6 +125,7 @@ export default function AdminDashboard({
         is_featured: formData.isFeatured,
         is_active: formData.isActive,
         verification_tier: formData.verificationTier,
+        hours: formData.hours,
       };
 
       const result = await upsertBusiness(dbData);
@@ -200,18 +181,17 @@ export default function AdminDashboard({
           display: 'flex', alignItems: 'center', gap: '0.5rem',
           animation: 'fadeInUp 0.2s ease',
         }}>
-          {toast.type === 'success' ? '✅' : '❌'} {toast.msg}
+          {toast.type === 'success' ? <CheckCircle size={16} style={{ marginRight: '0.35rem' }} /> : <X size={16} style={{ marginRight: '0.35rem' }} />} {toast.msg}
         </div>
       )}
       <div className={styles.header}>
         <div className="container">
           <div className={styles.headerRow}>
             <div>
-              <h1 className={styles.title}>{isOwner ? 'Business Dashboard' : 'Admin Dashboard'}</h1>
-              <p className={styles.subtitle}>{isOwner ? 'Manage your business listing' : 'Manage NaijaList business listings'}</p>
+              <h1 className={styles.title}>Admin Dashboard</h1>
+              <p className={styles.subtitle}>Manage NaijaList business listings</p>
             </div>
             <div className={styles.headerActions}>
-              {!isOwner && (
                 <button
                   className="btn btn-primary"
                   onClick={() => { resetForm(); setShowForm(true); }}
@@ -219,7 +199,6 @@ export default function AdminDashboard({
                 >
                   <Plus size={16} /> Add Business
                 </button>
-              )}
               <form action={logout}>
                 <button type="submit" className="btn btn-ghost btn-sm" id="admin-logout-btn">
                   Log out
@@ -231,22 +210,7 @@ export default function AdminDashboard({
       </div>
 
       <div className="container">
-        {/* Stats (Owners only) */}
-        {isOwner && hasBusiness && (
-          <div className={styles.statsRow}>
-            <div className={styles.statCard}>
-              <span className={styles.statValue}>{businesses[0].pageViews || 0}</span>
-              <span className={styles.statLabel}><Eye size={16} style={{display:'inline', verticalAlign:'text-bottom', marginRight:'4px'}}/> Profile Views</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statValue}>{businesses[0].whatsappClicks || 0}</span>
-              <span className={styles.statLabel}><Phone size={16} style={{display:'inline', verticalAlign:'text-bottom', marginRight:'4px'}}/> WhatsApp Clicks</span>
-            </div>
-          </div>
-        )}
-
         {/* Stats (Admins only) */}
-        {!isOwner && (
           <div className={styles.statsRow}>
             <div className={styles.statCard}>
               <span className={styles.statValue}>{businesses.length}</span>
@@ -265,7 +229,6 @@ export default function AdminDashboard({
               <span className={styles.statLabel}>Verified</span>
             </div>
           </div>
-        )}
 
         {/* Form */}
         {showForm && (
@@ -307,7 +270,7 @@ export default function AdminDashboard({
                     required
                   >
                     {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
                 </div>
@@ -397,6 +360,28 @@ export default function AdminDashboard({
                     rows={4}
                     placeholder="Describe the business, services offered, etc."
                   />
+                </div>
+
+                {/* Business Hours */}
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="form-label" style={{ marginBottom: '0.5rem', display: 'block' }}>Business Hours</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                      <div key={day}>
+                        <label htmlFor={`hours-${day}`} style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{day}</label>
+                        <input
+                          id={`hours-${day}`}
+                          className="form-input"
+                          style={{ padding: '0.5rem' }}
+                          value={formData.hours[day]}
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            hours: { ...formData.hours, [day]: e.target.value } 
+                          })}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* ---- Media Upload Section ---- */}
@@ -533,93 +518,79 @@ export default function AdminDashboard({
                   </>
                 )}
 
-                {!editingId && isOwner && (
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <div style={{ padding: '1.5rem', background: 'var(--color-primary-light)', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--color-primary-dark)' }}>
-                      <Lightbulb size={20} /> Save your business first, then you can upload images and videos!
+                {/* Admin-only options */}
+                <>
+                  <div className="form-group">
+                    <label htmlFor="biz-verification" className="form-label">Verification</label>
+                    <select
+                      id="biz-verification"
+                      className="form-input form-select"
+                      value={formData.verificationTier}
+                      onChange={(e) => setFormData({ ...formData, verificationTier: e.target.value as 'none' | 'phone' | 'cac' })}
+                    >
+                      <option value="none">Not verified</option>
+                      <option value="phone"><Phone size={16} /> Phone verified</option>
+                      <option value="cac"><Landmark size={16} /> CAC registered</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Options</label>
+                    <div className={styles.checkboxGroup}>
+                      <label className={styles.checkbox}>
+                        <input
+                          type="checkbox"
+                          checked={formData.isFeatured}
+                          onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                        />
+                        <Star size={16} /> Featured
+                      </label>
+                      <label className={styles.checkbox}>
+                        <input
+                          type="checkbox"
+                          checked={formData.isActive}
+                          onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                        />
+                        <CheckCircle size={16} /> Active
+                      </label>
                     </div>
                   </div>
-                )}
-
-                {/* Admin-only options */}
-                {!isOwner && (
-                  <>
-                    <div className="form-group">
-                      <label htmlFor="biz-verification" className="form-label">Verification</label>
-                      <select
-                        id="biz-verification"
-                        className="form-input form-select"
-                        value={formData.verificationTier}
-                        onChange={(e) => setFormData({ ...formData, verificationTier: e.target.value as 'none' | 'phone' | 'cac' })}
-                      >
-                        <option value="none">Not verified</option>
-                        <option value="phone"><Phone size={16} /> Phone verified</option>
-                        <option value="cac"><Landmark size={16} /> CAC registered</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Options</label>
-                      <div className={styles.checkboxGroup}>
-                        <label className={styles.checkbox}>
-                          <input
-                            type="checkbox"
-                            checked={formData.isFeatured}
-                            onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-                          />
-                          <Star size={16} /> Featured
-                        </label>
-                        <label className={styles.checkbox}>
-                          <input
-                            type="checkbox"
-                            checked={formData.isActive}
-                            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                          />
-                          <CheckCircle size={16} /> Active
-                        </label>
-                      </div>
-                    </div>
-                  </>
-                )}
+                </>
               </div>
 
               <div className={styles.formActions}>
                 <button type="submit" className="btn btn-primary" id="admin-save-btn" disabled={isPending}>
                   {isPending ? 'Saving...' : editingId ? '<Save size={16} /> Update Business' : '<Plus size={16} /> Create Business'}
                 </button>
-                {!isOwner && (
-                  <button type="button" className="btn btn-ghost" onClick={resetForm} id="admin-cancel-btn">
-                    Cancel
-                  </button>
-                )}
+                <button type="button" className="btn btn-ghost" onClick={resetForm} id="admin-cancel-btn">
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
         )}
 
-        {/* Tab switcher (Admins only) */}
-        {!isOwner && (
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '2px solid var(--color-border-light)', paddingBottom: '0' }}>
-            <button
-              className={`btn btn-sm ${activeTab === 'listings' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setActiveTab('listings')}
-              id="tab-listings"
-              style={{ borderRadius: '0.5rem 0.5rem 0 0', marginBottom: '-2px', borderBottom: activeTab === 'listings' ? '2px solid var(--color-primary)' : '2px solid transparent' }}
-            >
-              📋 Listings ({businesses.length})
-            </button>
-            <button
-              className={`btn btn-sm ${activeTab === 'analytics' ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setActiveTab('analytics')}
-              id="tab-analytics"
-              style={{ borderRadius: '0.5rem 0.5rem 0 0', marginBottom: '-2px', borderBottom: activeTab === 'analytics' ? '2px solid var(--color-primary)' : '2px solid transparent' }}
-            >
-              📊 Analytics
-            </button>
-          </div>
-        )}
+        {/* Tab switcher */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '2px solid var(--color-border-light)', paddingBottom: '0' }}>
+          <button
+            className={`btn btn-sm ${activeTab === 'listings' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setActiveTab('listings')}
+            id="tab-listings"
+            style={{ borderRadius: '0.5rem 0.5rem 0 0', marginBottom: '-2px', borderBottom: activeTab === 'listings' ? '2px solid var(--color-primary)' : '2px solid transparent' }}
+          >
+            📋 Listings ({businesses.length})
+          </button>
+          <button
+            className={`btn btn-sm ${activeTab === 'analytics' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setActiveTab('analytics')}
+            id="tab-analytics"
+            style={{ borderRadius: '0.5rem 0.5rem 0 0', marginBottom: '-2px', borderBottom: activeTab === 'analytics' ? '2px solid var(--color-primary)' : '2px solid transparent' }}
+          >
+            📊 Analytics
+          </button>
+        </div>
 
-        {/* Analytics tab (Admins only) */}
-        {!isOwner && activeTab === 'analytics' && (
+        {/* Analytics tab */}
+        {activeTab === 'analytics' && (
           <div className={styles.tableCard}>
             <h2 className={styles.tableTitle}>Analytics Overview</h2>
             <div className={styles.tableWrapper}>
@@ -636,7 +607,7 @@ export default function AdminDashboard({
                 <tbody>
                   {[...businesses].sort((a, b) => (b.pageViews || 0) - (a.pageViews || 0)).map((biz) => (
                     <tr key={biz.id} className={!biz.isActive ? styles.inactive : undefined}>
-                      <td><strong>{biz.name}</strong>{biz.isFeatured && <span className={styles.featuredPill}>⭐</span>}</td>
+                      <td><strong>{biz.name}</strong>{biz.isFeatured && <span className={styles.featuredPill}><Star size={12} /></span>}</td>
                       <td>{biz.cityName}</td>
                       <td style={{ textAlign: 'right', fontWeight: 600 }}>{(biz.pageViews || 0).toLocaleString()}</td>
                       <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-primary)' }}>{(biz.whatsappClicks || 0).toLocaleString()}</td>
@@ -653,8 +624,8 @@ export default function AdminDashboard({
           </div>
         )}
 
-        {/* Listings table (Admins only) */}
-        {!isOwner && activeTab === 'listings' && (
+        {/* Listings table */}
+        {activeTab === 'listings' && (
           <div className={styles.tableCard}>
             <h2 className={styles.tableTitle}>All Listings ({businesses.length})</h2>
             <div className={styles.tableWrapper}>
@@ -675,7 +646,7 @@ export default function AdminDashboard({
                       <td>
                         <div className={styles.bizCell}>
                           <strong>{biz.name}</strong>
-                          {biz.isFeatured && <span className={styles.featuredPill}>⭐</span>}
+                          {biz.isFeatured && <span className={styles.featuredPill}><Star size={12} /></span>}
                         </div>
                       </td>
                       <td>{biz.categoryName}</td>

@@ -1,32 +1,38 @@
 import { redirect } from 'next/navigation';
 import { getBusinessesAdmin, getCategories, getCities } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
-import AdminDashboard from './AdminDashboard';
+import type { Business } from '@/lib/types';
+import OwnerDashboard from './OwnerDashboard';
 
-export default async function AdminPage() {
+export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   if (!user) {
     redirect('/admin/login');
   }
 
   const { data: dbUser } = await supabase
     .from('users')
-    .select('role')
+    .select('role, business_id')
     .eq('id', user.id)
     .single();
-    
-  if (!dbUser || dbUser.role !== 'admin') {
-    redirect('/dashboard'); // Owners go to dashboard, users go to / (handled by login redirects, but fallback here)
+
+  if (!dbUser || dbUser.role !== 'owner') {
+    redirect('/admin/login');
   }
 
-  const businesses = await getBusinessesAdmin();
+  let businesses: Business[] = [];
+  if (dbUser.business_id) {
+    const all = await getBusinessesAdmin();
+    businesses = all.filter(b => b.id === dbUser.business_id);
+  }
+
   const categories = await getCategories();
   const cities = await getCities();
 
   return (
-    <AdminDashboard
+    <OwnerDashboard
       initialBusinesses={businesses}
       categories={categories}
       cities={cities}

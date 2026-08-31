@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getCategories, getCities, getFeaturedBusinesses } from '@/lib/data';
 import BusinessCardComponent from '@/components/BusinessCardComponent';
+import { Star, MapPin } from '@/components/Icons';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -130,7 +131,7 @@ export default async function HomePage() {
                 id={`cat-card-${cat.slug}`}
                 aria-label={`${cat.name} — ${cat.businessCount ?? 0} businesses`}
               >
-                <span className={styles.categoryIcon} aria-hidden="true">{cat.icon}</span>
+                <i className={`${styles.categoryIcon} ${cat.icon}`} aria-hidden="true" />
                 <span className={styles.categoryName}>{cat.name}</span>
                 <span className={styles.categoryCount}>{cat.businessCount ?? 0} businesses</span>
               </Link>
@@ -146,7 +147,9 @@ export default async function HomePage() {
         <div className="container">
           <div className="section-header">
             <div>
-              <h2 id="featured-heading" className="section-title">⭐ Featured Businesses</h2>
+              <h2 id="featured-heading" className="section-title">
+                <Star size={32} style={{ marginRight: '0.5rem', display: 'inline' }} /> Featured Businesses
+              </h2>
               <p className="section-subtitle">Top-rated and verified businesses in Enugu State</p>
             </div>
             <Link href="/businesses?featured=true" className="btn btn-ghost btn-sm" id="all-featured-link">
@@ -180,26 +183,26 @@ export default async function HomePage() {
             {[
               {
                 step: '01',
-                icon: '🔍',
+                iconClass: 'fa-solid fa-magnifying-glass',
                 title: 'Search or Browse',
                 desc: 'Find businesses by category, city, or search by name or service. No sign-up required.',
               },
               {
                 step: '02',
-                icon: '✅',
+                iconClass: 'fa-solid fa-circle-check',
                 title: 'Read & Trust',
                 desc: 'Check verification badges, business hours, photos, and real customer reviews.',
               },
               {
                 step: '03',
-                icon: '💬',
+                iconClass: 'fa-brands fa-whatsapp',
                 title: 'Contact on WhatsApp',
                 desc: 'One tap connects you directly via WhatsApp — how Nigerians actually communicate.',
               },
             ].map((s) => (
               <div key={s.step} className={styles.step} role="listitem">
                 <div className={styles.stepNumber} aria-hidden="true">{s.step}</div>
-                <div className={styles.stepIcon} aria-hidden="true">{s.icon}</div>
+                <div className={styles.stepIcon} aria-hidden="true"><i className={s.iconClass} /></div>
                 <h3 className={styles.stepTitle}>{s.title}</h3>
                 <p className={styles.stepDesc}>{s.desc}</p>
               </div>
@@ -231,7 +234,7 @@ export default async function HomePage() {
                 role="listitem"
                 id={`city-card-${city.slug}`}
               >
-                <span className={styles.cityPin} aria-hidden="true">📍</span>
+                <MapPin className={styles.cityPin} aria-hidden="true" />
                 <div>
                   <p className={styles.cityName}>{city.name}</p>
                   <p className={styles.cityCount}>{city.businessCount ?? 0} businesses</p>
@@ -259,8 +262,15 @@ export default async function HomePage() {
                 Get discovered by thousands of customers. List your business for free — be found on WhatsApp, Google, and NaijaList.
               </p>
               <div className={styles.ctaBullets}>
-                {['✅ Free basic listing', '📱 WhatsApp integration', '⭐ Customer reviews', '📊 Analytics dashboard (coming soon)'].map((b) => (
-                  <span key={b} className={styles.ctaBullet}>{b}</span>
+                {[
+                  { icon: 'fa-solid fa-circle-check', text: 'Free basic listing' },
+                  { icon: 'fa-brands fa-whatsapp', text: 'WhatsApp integration' },
+                  { icon: 'fa-solid fa-star', text: 'Customer reviews' },
+                  { icon: 'fa-solid fa-chart-column', text: 'Analytics dashboard (coming soon)' },
+                ].map((b) => (
+                  <span key={b.text} className={styles.ctaBullet}>
+                    <i className={b.icon} style={{ marginRight: '0.35rem' }} />{b.text}
+                  </span>
                 ))}
               </div>
             </div>

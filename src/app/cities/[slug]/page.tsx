@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { getCityBySlug, getBusinesses, getCities } from '@/lib/data';
+import { getCityBySlug, getBusinesses } from '@/lib/data';
 import { createBuildClient } from '@/lib/supabase/build-client';
 import type { City } from '@/lib/types';
 import BusinessCardComponent from '@/components/BusinessCardComponent';
+import { MapPin } from '@/components/Icons';
 
 const getCity = cache(async (slug: string): Promise<City | undefined> => {
   return getCityBySlug(slug);
@@ -67,7 +68,7 @@ export default async function CityDetailPage({
             <span>{city.name}</span>
           </nav>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
-            <span style={{ fontSize: '2.5rem' }} aria-hidden="true">📍</span>
+            <MapPin size={40} aria-hidden="true" />
             <h1 style={{
               fontSize: 'var(--font-size-3xl)',
               fontWeight: 'var(--font-weight-extrabold)',
@@ -96,7 +97,7 @@ export default async function CityDetailPage({
           </div>
         ) : (
           <div className="empty-state">
-            <span className="empty-state__icon">📍</span>
+            <MapPin size={48} className="empty-state__icon" aria-hidden="true" />
             <p className="empty-state__title">No businesses listed in {city.name} yet</p>
             <p className="empty-state__desc">
               Know a business here?{' '}

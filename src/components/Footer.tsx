@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import styles from './Footer.module.css';
 import { getCategories, getCities } from '@/lib/data';
+import { MapPin } from '@/components/Icons';
 
 export default async function Footer() {
   const allCategories = await getCategories();
@@ -57,9 +58,9 @@ export default async function Footer() {
           <h3 className={styles.columnTitle}>Browse Categories</h3>
           <ul className={styles.linkList}>
             {categories.map((cat) => (
-              <li key={cat.slug}>
+              <li key={cat.id}>
                 <Link href={`/categories/${cat.slug}`} className={styles.footerLink}>
-                  {cat.icon} {cat.name}
+                  <i className={cat.icon} style={{ marginRight: '0.25rem' }} /> {cat.name}
                 </Link>
               </li>
             ))}
@@ -78,7 +79,7 @@ export default async function Footer() {
             {cities.map((city) => (
               <li key={city.slug}>
                 <Link href={`/cities/${city.slug}`} className={styles.footerLink}>
-                  📍 {city.name}
+                  <MapPin size={14} style={{ marginRight: '0.25rem' }} /> {city.name}
                 </Link>
               </li>
             ))}

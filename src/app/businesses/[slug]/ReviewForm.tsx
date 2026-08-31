@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { submitReview } from './actions';
 import styles from './ReviewForm.module.css';
+import { CheckCircle, X, Star, Loader2 } from '@/components/Icons';
 
 interface Props {
   businessId: string;
@@ -66,7 +67,7 @@ export default function ReviewForm({ businessId, slug, isAuthenticated }: Props)
       {/* Toast */}
       {toast && (
         <div className={`${styles.toast} ${toast.type === 'success' ? styles.toastSuccess : styles.toastError}`} role="alert">
-          {toast.type === 'success' ? '✅' : '❌'} {toast.msg}
+          {toast.type === 'success' ? <CheckCircle size={16} style={{ marginRight: '0.35rem' }} /> : <X size={16} style={{ marginRight: '0.35rem' }} />} {toast.msg}
         </div>
       )}
 
@@ -117,7 +118,7 @@ export default function ReviewForm({ businessId, slug, isAuthenticated }: Props)
         disabled={isPending}
         style={{ minWidth: '160px' }}
       >
-        {isPending ? '⏳ Submitting…' : '⭐ Submit Review'}
+        {isPending ? <><Loader2 size={16} style={{ marginRight: '0.35rem' }} /> Submitting…</> : <><Star size={16} style={{ marginRight: '0.35rem' }} /> Submit Review</>}
       </button>
     </form>
   );

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config({ path: '.env.local' });
 import { CATEGORIES, STATES, CITIES, BUSINESSES } from '../src/lib/mock-data';

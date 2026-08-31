@@ -27,6 +27,8 @@ export async function login(formData: FormData) {
 
     if (dbUser?.role === 'user') {
       return redirect('/');
+    } else if (dbUser?.role === 'owner') {
+      return redirect('/dashboard');
     }
   }
 
@@ -61,7 +63,7 @@ export async function signup(formData: FormData) {
   if (accountType === 'user') {
     return redirect('/');
   }
-  return redirect('/admin');
+  return redirect('/dashboard');
 }
 
 export async function logout() {

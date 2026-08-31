@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { getBusinessBySlug, getRelatedBusinesses, getBusinesses } from '@/lib/data';
+import { getBusinessBySlug, getRelatedBusinesses } from '@/lib/data';
 import { createBuildClient } from '@/lib/supabase/build-client';
 import type { Business, BusinessHours } from '@/lib/types';
 import VerifiedBadge from '@/components/VerifiedBadge';
@@ -13,6 +13,7 @@ import { getReviews } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
 import styles from './page.module.css';
 import BusinessClientTracker from './BusinessClientTracker';
+import { Star, MapPin, Globe2, Phone, Landmark } from '@/components/Icons';
 import WhatsappClientLink from './WhatsappClientLink';
 
 // Memoize data fetch so it only runs once per request even if called
@@ -163,7 +164,7 @@ export default async function BusinessDetailPage({
               <span className={styles.heroEmoji}>{emoji}</span>
             </div>
             {biz.isFeatured && (
-              <span className={styles.featuredChip}>⭐ Featured</span>
+            <span className={styles.featuredChip}><Star size={14} style={{ marginRight: '0.25rem' }} /> Featured</span>
             )}
           </div>
 
@@ -238,20 +239,20 @@ export default async function BusinessDetailPage({
             
             {reviews.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {reviews.map((r: any) => (
-                  <div key={r.id} className={styles.reviewCard}>
+                {reviews.map((r: Record<string, unknown>) => (
+                  <div key={r.id as string} className={styles.reviewCard}>
                     <div className={styles.reviewHeader}>
-                      <strong className={styles.reviewAuthor}>{r.users?.email?.split('@')[0] || 'User'}</strong>
-                      <StarRating rating={r.rating} />
+                      <strong className={styles.reviewAuthor}>{(r.users as Record<string, unknown>)?.email?.toString().split('@')[0] || 'User'}</strong>
+                      <StarRating rating={r.rating as number} />
                     </div>
-                    <p className={styles.reviewBody}>{r.body}</p>
+                    <p className={styles.reviewBody}>{r.body as string}</p>
                     <small className={styles.reviewDate}>
-                      {new Date(r.created_at).toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(r.created_at as string).toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </small>
-                    {r.owner_response && (
+                    {!!r.owner_response && (
                       <div className={styles.ownerResponse}>
-                        <p className={styles.ownerResponseLabel}>🏢 Owner's Response</p>
-                        <p className={styles.ownerResponseBody}>{r.owner_response}</p>
+                        <p className={styles.ownerResponseLabel}><Landmark size={14} style={{ marginRight: '0.35rem' }} /> Owner&apos;s Response</p>
+                        <p className={styles.ownerResponseBody}>{r.owner_response as string}</p>
                       </div>
                     )}
                   </div>
@@ -259,7 +260,7 @@ export default async function BusinessDetailPage({
               </div>
             ) : (
               <div className={styles.reviewsPlaceholder}>
-                <span className={styles.reviewsIcon} aria-hidden="true">⭐</span>
+                <Star size={40} className={styles.reviewsIcon} aria-hidden="true" />
                 <p className={styles.reviewsTitle}>No reviews yet</p>
                 <p className={styles.reviewsDesc}>Be the first to review this business!</p>
               </div>
@@ -300,7 +301,7 @@ export default async function BusinessDetailPage({
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.25 1.13 2 2 0 012.23 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.18 6.18l1.57-1.57a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
               </svg>
-              📞 {biz.phone}
+              <Phone size={18} aria-hidden="true" /> {biz.phone}
             </a>
 
             {/* Email */}
@@ -314,7 +315,7 @@ export default async function BusinessDetailPage({
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/>
                 </svg>
-                ✉️ Send Email
+                <i className="fa-regular fa-envelope" style={{ marginRight: '0.35rem' }} /> Send Email
               </a>
             )}
 
@@ -328,7 +329,7 @@ export default async function BusinessDetailPage({
                 id="biz-website-cta"
                 aria-label={`Visit ${biz.name}'s website`}
               >
-                🌐 Visit Website
+                <Globe2 size={18} style={{ marginRight: '0.35rem' }} /> Visit Website
               </a>
             )}
 
@@ -336,7 +337,7 @@ export default async function BusinessDetailPage({
 
             {/* Address info */}
             <div className={styles.infoRow}>
-              <span className={styles.infoIcon} aria-hidden="true">📍</span>
+              <MapPin className={styles.infoIcon} aria-hidden="true" />
               <div>
                 <p className={styles.infoLabel}>Address</p>
                 <p className={styles.infoValue}>{biz.address}, {biz.cityName}, {biz.stateName}</p>
@@ -348,7 +349,7 @@ export default async function BusinessDetailPage({
               const todayHours = (biz.hours as BusinessHours)[today];
               return todayHours ? (
                 <div className={styles.infoRow}>
-                  <span className={styles.infoIcon} aria-hidden="true">🕐</span>
+                  <i className="fa-regular fa-clock" style={{ fontSize: '1rem' }} />
                   <div>
                     <p className={styles.infoLabel}>Today&apos;s Hours</p>
                     <p className={`${styles.infoValue} ${todayHours === 'Closed' ? styles.closedText : styles.openText}`}>

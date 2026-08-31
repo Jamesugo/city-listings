@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from './supabase/server';
 import type { Category, State, City, Business, BusinessCard } from './types';
 

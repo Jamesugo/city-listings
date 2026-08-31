@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getCities } from '@/lib/data';
+import { MapPin } from '@/components/Icons';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -39,7 +40,7 @@ export default async function CitiesPage() {
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div className={styles.cardLeft}>
-                <span className={styles.cardPin} aria-hidden="true">📍</span>
+                <MapPin className={styles.cardPin} aria-hidden="true" />
                 <div>
                   <h2 className={styles.cardName}>{city.name}</h2>
                   <p className={styles.cardState}>{city.stateName} State</p>

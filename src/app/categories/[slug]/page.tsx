@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
-import { getCategoryBySlug, getBusinesses, getCategories } from '@/lib/data';
+import { getCategoryBySlug, getBusinesses } from '@/lib/data';
 import { createBuildClient } from '@/lib/supabase/build-client';
 import type { Category } from '@/lib/types';
 import BusinessCardComponent from '@/components/BusinessCardComponent';

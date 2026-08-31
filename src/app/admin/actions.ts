@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export async function upsertBusiness(formData: any) {
+export async function upsertBusiness(formData: Record<string, unknown>) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -16,7 +16,7 @@ export async function upsertBusiness(formData: any) {
     .single();
 
   const role = dbUser?.role || 'owner';
-  let businessId = dbUser?.business_id;
+  const businessId = dbUser?.business_id;
 
   // RBAC checks for business owners
   if (role === 'owner') {

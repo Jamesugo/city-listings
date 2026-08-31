@@ -6,6 +6,7 @@ import type { BusinessCard } from '@/lib/types';
 import styles from './BusinessCardComponent.module.css';
 import VerifiedBadge from './VerifiedBadge';
 import StarRating from './StarRating';
+import { Star } from '@/components/Icons';
 
 interface Props {
   business: BusinessCard;
@@ -67,7 +68,9 @@ export default function BusinessCardComponent({ business, priority = false }: Pr
             </div>
           )}
           {business.isFeatured && (
-            <span className={styles.featuredBadge} aria-label="Featured listing">⭐ Featured</span>
+            <span className={styles.featuredBadge} aria-label="Featured listing">
+              <Star size={12} style={{ marginRight: '0.25rem' }} /> Featured
+            </span>
           )}
         </div>
       </Link>

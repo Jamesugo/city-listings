@@ -38,7 +38,7 @@ export default async function CategoriesPage() {
               id={`cat-page-${cat.slug}`}
               style={{ animationDelay: `${i * 40}ms` }}
             >
-              <div className={styles.cardIcon} aria-hidden="true">{cat.icon}</div>
+              <i className={`${styles.cardIcon} ${cat.icon}`} aria-hidden="true" />
               <div className={styles.cardBody}>
                 <h2 className={styles.cardName}>{cat.name}</h2>
                 <p className={styles.cardDesc}>{cat.description}</p>
