@@ -53,7 +53,7 @@ export default function OwnerDashboard({
     email: businesses[0].email ?? '',
     website: businesses[0].website ?? '',
     description: businesses[0].description,
-    hours: (businesses[0].hours as any) || { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' },
+    hours: (businesses[0].hours as Record<string, string>) || { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' },
   } : {
     name: '',
     slug: '',
@@ -300,7 +300,7 @@ export default function OwnerDashboard({
                   {/* Business Hours */}
                   <div className={styles.sectionHeader} style={{ marginTop: 'var(--space-8)' }}>
                     <h2 className={styles.sectionTitle} style={{ fontSize: '1.25rem' }}>Business Hours</h2>
-                    <p className={styles.sectionSubtitle}>Set your availability for each day (e.g. "9am - 5pm" or "Closed").</p>
+                    <p className={styles.sectionSubtitle}>Set your availability for each day (e.g. &quot;9am - 5pm&quot; or &quot;Closed&quot;).</p>
                   </div>
                   
                   <div className={styles.formGrid}>
