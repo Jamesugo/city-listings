@@ -2,14 +2,30 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
-import { Building2, FolderOpen, Globe2, LayoutDashboard, KeyRound, Plus, MapPin } from '@/components/Icons';
+import type { User } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
+import { Building2, FolderOpen, Globe2, KeyRound, Plus, MapPin, User as UserIcon } from '@/components/Icons';
 import styles from './Navbar.module.css';
+
+async function resolveDashboardHref(userId: string): Promise<string> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', userId)
+    .single();
+
+  if (data?.role === 'admin') return '/admin';
+  if (data?.role === 'owner') return '/dashboard';
+  return '/';
+}
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [dashboardHref, setDashboardHref] = useState('/dashboard');
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -17,15 +33,26 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check auth state on mount
   useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    );
+    const supabase = createClient();
+
+    const syncUser = async (nextUser: User | null) => {
+      setUser(nextUser);
+      if (nextUser) {
+        setDashboardHref(await resolveDashboardHref(nextUser.id));
+      }
+      setAuthReady(true);
+    };
+
     supabase.auth.getUser().then(({ data }) => {
-      setIsLoggedIn(!!data.user);
+      syncUser(data.user);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // Close menu on route change
@@ -61,9 +88,18 @@ export default function Navbar() {
 
         {/* Desktop CTA */}
         <div className={styles.actions}>
-          {isLoggedIn ? (
-            <Link href="/admin" className="btn btn-outline btn-sm" id="nav-dashboard">
-              My Dashboard
+          {!authReady ? null : user ? (
+            <Link
+              href={dashboardHref}
+              className={styles.profileButton}
+              id="nav-profile"
+              aria-label="Go to your dashboard"
+              title="My Dashboard"
+            >
+              <span className={styles.profileAvatar} aria-hidden="true">
+                {(user.email?.[0] ?? 'U').toUpperCase()}
+              </span>
+              <span className={styles.profileLabel}>My Dashboard</span>
             </Link>
           ) : (
             <>
@@ -105,9 +141,9 @@ export default function Navbar() {
             <Globe2 size={18} /> Cities
           </Link>
           <div className={styles.mobileDivider} />
-          {isLoggedIn ? (
-            <Link href="/admin" className={`${styles.mobileLink} ${styles.mobileCta}`} onClick={closeMenu} role="menuitem">
-              <LayoutDashboard size={18} /> My Dashboard
+          {!authReady ? null : user ? (
+            <Link href={dashboardHref} className={`${styles.mobileLink} ${styles.mobileCta}`} onClick={closeMenu} role="menuitem" id="nav-profile-mobile">
+              <UserIcon size={18} /> My Dashboard
             </Link>
           ) : (
             <>
