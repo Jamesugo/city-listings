@@ -98,6 +98,7 @@ export default async function Footer() {
             <li><Link href="/about" className={styles.footerLink}>About NaijaList</Link></li>
             <li><Link href="/admin" className={styles.footerLink}>List Your Business</Link></li>
             <li><Link href="/contact" className={styles.footerLink}>Contact Us</Link></li>
+            <li><Link href="/faq" className={styles.footerLink}>FAQ</Link></li>
             <li><Link href="/privacy" className={styles.footerLink}>Privacy Policy</Link></li>
             <li><Link href="/terms" className={styles.footerLink}>Terms of Service</Link></li>
           </ul>

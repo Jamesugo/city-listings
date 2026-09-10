@@ -68,7 +68,7 @@ export default async function CategoryDetailPage({
             <span>{cat.name}</span>
           </nav>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
-            <span style={{ fontSize: '2.5rem' }} aria-hidden="true">{cat.icon}</span>
+            <span style={{ fontSize: '2.5rem' }} aria-hidden="true" className={cat.icon}></span>
             <h1 style={{
               fontSize: 'var(--font-size-3xl)',
               fontWeight: 'var(--font-weight-extrabold)',
@@ -95,7 +95,7 @@ export default async function CategoryDetailPage({
           </div>
         ) : (
           <div className="empty-state">
-            <span className="empty-state__icon">{cat.icon}</span>
+            <span className={`empty-state__icon ${cat.icon}`}></span>
             <p className="empty-state__title">No {cat.name.toLowerCase()} listed yet</p>
             <p className="empty-state__desc">
               Know a business in this category?{' '}

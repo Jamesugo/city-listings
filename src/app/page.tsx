@@ -72,7 +72,7 @@ export default async function HomePage() {
                 className={styles.quickLink}
                 id={`quick-cat-${cat.slug}`}
               >
-                <span aria-hidden="true">{cat.icon}</span> {cat.name}
+                <span aria-hidden="true" className={cat.icon}></span> {cat.name}
               </Link>
             ))}
           </div>

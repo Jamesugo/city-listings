@@ -84,6 +84,15 @@ export default function Navbar() {
           <Link href="/cities" className={styles.link} role="menuitem">
             Cities
           </Link>
+          <Link href="/about" className={styles.link} role="menuitem">
+            About
+          </Link>
+          <Link href="/faq" className={styles.link} role="menuitem">
+            FAQ
+          </Link>
+          <Link href="/contact" className={styles.link} role="menuitem">
+            Contact
+          </Link>
         </div>
 
         {/* Desktop CTA */}
@@ -139,6 +148,15 @@ export default function Navbar() {
           </Link>
           <Link href="/cities" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
             <Globe2 size={18} /> Cities
+          </Link>
+          <Link href="/about" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
+            About
+          </Link>
+          <Link href="/faq" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
+            FAQ
+          </Link>
+          <Link href="/contact" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
+            Contact
           </Link>
           <div className={styles.mobileDivider} />
           {!authReady ? null : user ? (
