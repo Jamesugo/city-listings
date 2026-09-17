@@ -3,6 +3,7 @@
 import { useState, useCallback, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Business, Category, City, State } from '@/lib/types';
+import { NIGERIAN_STATES } from '@/lib/nigerianStates';
 import { upsertBusiness } from '../admin/actions';
 import { uploadMedia, deleteMedia } from '../admin/upload';
 import { logout } from '../admin/login/actions';
@@ -27,11 +28,11 @@ export default function OwnerDashboard({
   const editingId = hasBusiness ? businesses[0].id : null;
 
   // Derive initial state from the existing business's city
-  const initialStateId = hasBusiness
-    ? cities.find(c => c.id === businesses[0].cityId)?.stateId ?? states[0]?.id ?? ''
-    : states[0]?.id ?? '';
-  const [selectedStateId, setSelectedStateId] = useState(initialStateId);
-  const filteredCities = cities.filter(c => c.stateId === selectedStateId);
+  const initialStateName = hasBusiness
+    ? cities.find(c => c.id === businesses[0].cityId)?.stateName ?? NIGERIAN_STATES[0]?.name ?? ''
+    : NIGERIAN_STATES[0]?.name ?? '';
+  const [selectedStateName, setSelectedStateName] = useState(initialStateName);
+  const filteredCities = cities.filter(c => c.stateName === selectedStateName);
 
   const [activeTab, setActiveTab] = useState<'profile' | 'myprofile' | 'media' | 'stats'>('profile');
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -235,19 +236,19 @@ export default function OwnerDashboard({
                       <select
                         id="biz-state"
                         className="form-input form-select"
-                        value={selectedStateId}
+                        value={selectedStateName}
                         onChange={(e) => {
-                          const newStateId = e.target.value;
-                          setSelectedStateId(newStateId);
+                          const newStateName = e.target.value;
+                          setSelectedStateName(newStateName);
                           // Reset city to first city in new state
-                          const firstCity = cities.find(c => c.stateId === newStateId);
+                          const firstCity = cities.find(c => c.stateName === newStateName);
                           setFormData(prev => ({ ...prev, cityId: firstCity?.id ?? '' }));
                         }}
                         required
                       >
                         <option value="" disabled>Select a state...</option>
-                        {states.map((state) => (
-                          <option key={state.id} value={state.id}>{state.name}</option>
+                        {NIGERIAN_STATES.map((state) => (
+                          <option key={state.slug} value={state.name}>{state.name}</option>
                         ))}
                       </select>
                     </div>
@@ -259,7 +260,7 @@ export default function OwnerDashboard({
                         value={formData.cityId}
                         onChange={(e) => setFormData({ ...formData, cityId: e.target.value })}
                         required
-                        disabled={!selectedStateId}
+                        disabled={!selectedStateName}
                       >
                         {filteredCities.length === 0 ? (
                           <option value="">No cities for selected state</option>
