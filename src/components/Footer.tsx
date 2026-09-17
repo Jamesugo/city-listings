@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import styles from './Footer.module.css';
-import { getCategories, getCities } from '@/lib/data';
+import { getCategories } from '@/lib/data';
+import { NIGERIAN_STATES } from '@/lib/nigerianStates';
 import { MapPin } from '@/components/Icons';
 
 export default async function Footer() {
   const allCategories = await getCategories();
   const categories = allCategories.slice(0, 8);
-  const cities = await getCities();
+  const states = NIGERIAN_STATES.slice(0, 8);
 
   return (
     <footer className={styles.footer} role="contentinfo">
@@ -72,20 +73,20 @@ export default async function Footer() {
           </ul>
         </div>
 
-        {/* Cities */}
+        {/* States */}
         <div className={styles.column}>
-          <h3 className={styles.columnTitle}>Cities in Enugu</h3>
+          <h3 className={styles.columnTitle}>Browse by State</h3>
           <ul className={styles.linkList}>
-            {cities.map((city) => (
-              <li key={city.slug}>
-                <Link href={`/cities/${city.slug}`} className={styles.footerLink}>
-                  <MapPin size={14} style={{ marginRight: '0.25rem' }} /> {city.name}
+            {states.map((state) => (
+              <li key={state.slug}>
+                <Link href={`/cities?state=${state.slug}`} className={styles.footerLink}>
+                  <MapPin size={14} style={{ marginRight: '0.25rem' }} /> {state.name}
                 </Link>
               </li>
             ))}
             <li>
               <Link href="/cities" className={`${styles.footerLink} ${styles.seeAll}`}>
-                View all cities →
+                View all states →
               </Link>
             </li>
           </ul>

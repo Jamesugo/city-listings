@@ -46,13 +46,18 @@ export default function Navbar() {
       setAuthReady(true);
     };
 
+    // Initial session check
     supabase.auth.getUser().then(({ data }) => {
       syncUser(data.user);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen to auth changes — fires on sign in, sign out, token refresh
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       syncUser(session?.user ?? null);
-      router.refresh();
+      // Force server components to re-render so the Navbar reflects the correct session
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        router.refresh();
+      }
     });
 
     return () => subscription.unsubscribe();

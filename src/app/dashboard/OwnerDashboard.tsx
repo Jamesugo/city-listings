@@ -483,25 +483,129 @@ export default function OwnerDashboard({
               </>
             )}
 
-            {activeTab === 'stats' && hasBusiness && (
-              <>
-                <div className={styles.sectionHeader}>
-                  <h1 className={styles.sectionTitle}>Analytics</h1>
-                  <p className={styles.sectionSubtitle}>See how your business listing is performing on NaijaList.</p>
-                </div>
-                
-                <div className={styles.statsRow}>
-                  <div className={styles.statCard}>
-                    <span className={styles.statValue}>{businesses[0].pageViews || 0}</span>
-                    <span className={styles.statLabel}><Eye size={16} /> Profile Views</span>
+            {activeTab === 'stats' && hasBusiness && (() => {
+              const biz = businesses[0];
+              const views = biz.pageViews || 0;
+              const waClicks = biz.whatsappClicks || 0;
+              const convRate = views > 0 ? ((waClicks / views) * 100).toFixed(1) : '0.0';
+              const fields = [biz.name, biz.description, biz.phone, biz.whatsapp, biz.email, biz.website, biz.coverImageUrl, biz.address];
+              const filled = fields.filter(Boolean).length;
+              const profileScore = Math.round((filled / fields.length) * 100);
+              const trendWeights = [0.08, 0.10, 0.12, 0.14, 0.18, 0.16, 0.22];
+              const dailyViews = trendWeights.map(w => Math.round(views * w));
+              const maxDay = Math.max(...dailyViews, 1);
+              const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+              return (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <h1 className={styles.sectionTitle}>Analytics & Insights</h1>
+                    <p className={styles.sectionSubtitle}>See how your listing is performing on NaijaList.</p>
                   </div>
-                  <div className={styles.statCard}>
-                    <span className={styles.statValue}>{businesses[0].whatsappClicks || 0}</span>
-                    <span className={styles.statLabel}><Phone size={16} /> WhatsApp Clicks</span>
+
+                  {/* KPI Cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}>
+                    {[
+                      { label: 'Profile Views', value: views, icon: '👁️', color: '#3b82f6', bg: '#eff6ff', hint: 'Total times your listing was viewed' },
+                      { label: 'WhatsApp Clicks', value: waClicks, icon: '💬', color: '#22c55e', bg: '#f0fdf4', hint: 'Customers who tapped your WhatsApp button' },
+                      { label: 'Conversion Rate', value: `${convRate}%`, icon: '📈', color: '#f59e0b', bg: '#fffbeb', hint: 'Views that became WhatsApp contacts' },
+                      { label: 'Profile Score', value: `${profileScore}%`, icon: '⭐', color: '#8b5cf6', bg: '#f5f3ff', hint: 'How complete your business profile is' },
+                    ].map((stat) => (
+                      <div key={stat.label} style={{
+                        background: stat.bg,
+                        border: `1px solid ${stat.color}22`,
+                        borderRadius: 'var(--radius-xl)',
+                        padding: 'var(--space-5)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.25rem',
+                      }}>
+                        <span style={{ fontSize: '1.5rem' }}>{stat.icon}</span>
+                        <span style={{ fontSize: '2rem', fontWeight: 900, color: stat.color, lineHeight: 1 }}>{stat.value}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: stat.color }}>{stat.label}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.25rem' }}>{stat.hint}</span>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              </>
-            )}
+
+                  {/* 7-Day Bar Chart */}
+                  <div style={{ background: '#f8fafc', border: '1px solid var(--color-border-light)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
+                    <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 'var(--space-4)' }}>
+                      📊 Estimated 7-Day View Distribution
+                    </h2>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--space-3)', height: '140px', padding: '0 var(--space-2)' }}>
+                      {days.map((day, i) => (
+                        <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', height: '100%', justifyContent: 'flex-end' }}>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-primary)' }}>{dailyViews[i]}</span>
+                          <div style={{
+                            width: '100%',
+                            height: `${(dailyViews[i] / maxDay) * 100}%`,
+                            minHeight: '4px',
+                            background: i === 6 ? 'var(--color-primary)' : `var(--color-primary)66`,
+                            borderRadius: '6px 6px 0 0',
+                            transition: 'height 0.4s ease',
+                          }} />
+                          <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{day}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 'var(--space-3)', textAlign: 'center' }}>
+                      * Distribution estimated from total view count. Day-by-day tracking coming soon.
+                    </p>
+                  </div>
+
+                  {/* Profile Strength */}
+                  <div style={{ background: '#f8fafc', border: '1px solid var(--color-border-light)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
+                    <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 'var(--space-3)' }}>
+                      ⭐ Profile Strength — {profileScore}%
+                    </h2>
+                    <div style={{ background: '#e2e8f0', borderRadius: '999px', height: '10px', marginBottom: 'var(--space-4)' }}>
+                      <div style={{ height: '100%', width: `${profileScore}%`, background: profileScore >= 75 ? 'var(--color-primary)' : profileScore >= 50 ? '#f59e0b' : '#ef4444', borderRadius: '999px', transition: 'width 0.5s ease' }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
+                      {[
+                        { label: 'Business name', done: !!biz.name },
+                        { label: 'Description', done: !!biz.description },
+                        { label: 'Phone number', done: !!biz.phone },
+                        { label: 'WhatsApp number', done: !!biz.whatsapp },
+                        { label: 'Email address', done: !!biz.email },
+                        { label: 'Website link', done: !!biz.website },
+                        { label: 'Cover image', done: !!biz.coverImageUrl },
+                        { label: 'Physical address', done: !!biz.address },
+                      ].map(item => (
+                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', color: item.done ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}>
+                          <span>{item.done ? '✅' : '⬜'}</span>
+                          <span style={{ fontWeight: item.done ? 600 : 400 }}>{item.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tips */}
+                  <div style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', border: '1px solid #86efac', borderRadius: 'var(--radius-xl)', padding: 'var(--space-6)' }}>
+                    <h2 style={{ fontSize: '1rem', fontWeight: 700, color: '#15803d', marginBottom: 'var(--space-3)' }}>
+                      💡 Tips to Get More Customers
+                    </h2>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {([
+                        !biz.coverImageUrl && 'Add a cover photo — listings with images get 3× more views.',
+                        !biz.whatsapp && 'Add your WhatsApp number so customers can contact you instantly.',
+                        !biz.website && 'Add your website link to build more credibility.',
+                        !biz.email && 'Add an email address for customers who prefer email.',
+                        profileScore < 100 && 'Complete your profile to 100% to rank higher in search results.',
+                      ] as (string | false)[]).filter((t): t is string => Boolean(t)).slice(0, 4).map((tip, i) => (
+                        <li key={i} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.85rem', color: '#166534' }}>
+                          <span>→</span><span>{tip}</span>
+                        </li>
+                      ))}
+                      {profileScore === 100 && (
+                        <li style={{ fontSize: '0.85rem', color: '#166534', fontWeight: 600 }}>🎉 Your profile is 100% complete! You are set for maximum visibility.</li>
+                      )}
+                    </ul>
+                  </div>
+                </>
+              );
+            })()}
           </main>
         </div>
       </div>
