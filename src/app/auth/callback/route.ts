@@ -5,8 +5,8 @@ import { cookies } from 'next/headers'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/'
+  // if "next" is in param, use it as the redirect URL, default to /dashboard
+  const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
     const cookieStore = await cookies()
@@ -45,10 +45,13 @@ export async function GET(request: Request) {
         { onConflict: 'id', ignoreDuplicates: true }
       )
 
-      return NextResponse.redirect(`${origin}${next}`)
+      // Use NEXT_PUBLIC_SITE_URL to ensure redirect always goes to the correct app domain
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
+      return NextResponse.redirect(`${siteUrl}${next}`)
     }
   }
 
   // return the user to an error page with some instructions
-  return NextResponse.redirect(`${origin}/admin/login?error=Invalid%20or%20expired%20auth%20link`)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
+  return NextResponse.redirect(`${siteUrl}/admin/login?error=Invalid%20or%20expired%20auth%20link`)
 }

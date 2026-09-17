@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { Building2, FolderOpen, Globe2, KeyRound, Plus, MapPin, User as UserIcon } from '@/components/Icons';
@@ -26,6 +27,7 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [dashboardHref, setDashboardHref] = useState('/dashboard');
   const [authReady, setAuthReady] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -50,10 +52,11 @@ export default function Navbar() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       syncUser(session?.user ?? null);
+      router.refresh();
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   // Close menu on route change
   const closeMenu = () => setMenuOpen(false);
