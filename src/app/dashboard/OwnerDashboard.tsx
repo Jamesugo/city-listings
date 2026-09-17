@@ -23,7 +23,7 @@ export default function OwnerDashboard({
   const router = useRouter();
   
   const editingId = hasBusiness ? businesses[0].id : null;
-  const [activeTab, setActiveTab] = useState<'profile' | 'media' | 'stats'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'myprofile' | 'media' | 'stats'>('profile');
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -134,6 +134,14 @@ export default function OwnerDashboard({
               >
                 <User size={18} /> Business Profile
               </button>
+              {hasBusiness && (
+                <button 
+                  className={`${styles.menuItem} ${activeTab === 'myprofile' ? styles.active : ''}`}
+                  onClick={() => setActiveTab('myprofile')}
+                >
+                  <Eye size={18} /> My Public Profile
+                </button>
+              )}
               <button 
                 className={`${styles.menuItem} ${activeTab === 'media' ? styles.active : ''}`}
                 onClick={() => setActiveTab('media')}
@@ -482,6 +490,176 @@ export default function OwnerDashboard({
                 )}
               </>
             )}
+
+            {activeTab === 'myprofile' && hasBusiness && (() => {
+              const biz = businesses[0];
+              const waUrl = biz.whatsapp
+                ? `https://wa.me/${biz.whatsapp}?text=Hello%20${encodeURIComponent(biz.name)}%2C%20I%20found%20you%20on%20NaijaList!`
+                : null;
+              const views = biz.pageViews || 0;
+              const waClicks = biz.whatsappClicks || 0;
+              const convRate = views > 0 ? ((waClicks / views) * 100).toFixed(1) : '0.0';
+              const fields = [biz.name, biz.description, biz.phone, biz.whatsapp, biz.email, biz.website, biz.coverImageUrl, biz.address];
+              const profileScore = Math.round((fields.filter(Boolean).length / fields.length) * 100);
+              const DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+              return (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <h1 className={styles.sectionTitle}>My Public Profile</h1>
+                    <p className={styles.sectionSubtitle}>This is exactly how customers see your business on NaijaList.</p>
+                  </div>
+
+                  {/* Quick actions bar */}
+                  <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
+                    <a
+                      href={`/businesses/${biz.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary btn-sm"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                    >
+                      <Eye size={15} /> View Live Page
+                    </a>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                      onClick={() => setActiveTab('media')}
+                    >
+                      <ImagePlus size={15} /> Change Cover Photo
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                      onClick={() => setActiveTab('profile')}
+                    >
+                      <Save size={15} /> Edit Profile Details
+                    </button>
+                  </div>
+
+                  {/* Profile card preview */}
+                  <div style={{ border: '1px solid var(--color-border-light)', borderRadius: 'var(--radius-2xl)', overflow: 'hidden', marginBottom: 'var(--space-6)', boxShadow: 'var(--shadow-md)' }}>
+                    {/* Cover image */}
+                    <div style={{ position: 'relative', height: '200px', background: biz.coverImageUrl ? 'transparent' : 'linear-gradient(135deg, var(--color-primary-light), var(--color-primary))' }}>
+                      {biz.coverImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={biz.coverImageUrl} alt={biz.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-primary-dark)', gap: '0.5rem' }}>
+                          <ImagePlus size={40} style={{ opacity: 0.6 }} />
+                          <span style={{ fontWeight: 600, opacity: 0.8 }}>No cover image yet</span>
+                          <button type="button" className="btn btn-primary btn-sm" onClick={() => setActiveTab('media')}>Upload Cover Photo</button>
+                        </div>
+                      )}
+                      {biz.isFeatured && (
+                        <span style={{ position: 'absolute', top: '1rem', left: '1rem', background: '#f59e0b', color: 'white', fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.75rem', borderRadius: '999px' }}>⭐ Featured</span>
+                      )}
+                    </div>
+
+                    {/* Business info */}
+                    <div style={{ padding: 'var(--space-6)' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                        <span style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
+                          {biz.categoryName}
+                        </span>
+                        {biz.verificationTier !== 'none' && (
+                          <span style={{ background: '#dcfce7', color: '#15803d', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '999px' }}>
+                            ✓ Verified
+                          </span>
+                        )}
+                      </div>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--color-text-primary)', margin: '0 0 0.5rem' }}>{biz.name}</h2>
+                      <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        📍 {biz.address}, {biz.cityName}, {biz.stateName}
+                      </p>
+                      <p style={{ color: 'var(--color-text-secondary)', lineHeight: 1.7, margin: '0 0 1.5rem' }}>{biz.description}</p>
+
+                      {/* Contact buttons preview */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                        {waUrl && (
+                          <span style={{ background: '#25D366', color: 'white', padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-lg)', fontWeight: 700, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            💬 Chat on WhatsApp
+                          </span>
+                        )}
+                        <span style={{ border: '1px solid var(--color-border)', padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-lg)', fontWeight: 600, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          📞 {biz.phone}
+                        </span>
+                        {biz.email && (
+                          <span style={{ border: '1px solid var(--color-border)', padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-lg)', fontWeight: 600, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            ✉️ Send Email
+                          </span>
+                        )}
+                        {biz.website && (
+                          <span style={{ border: '1px solid var(--color-border)', padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-lg)', fontWeight: 600, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            🌐 Visit Website
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Hours */}
+                      {biz.hours && (
+                        <div style={{ borderTop: '1px solid var(--color-border-light)', paddingTop: '1.25rem' }}>
+                          <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.75rem' }}>Business Hours</h3>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem 1.5rem' }}>
+                            {DAY_ORDER.map(day => {
+                              const h = (biz.hours as Record<string, string>)?.[day];
+                              return (
+                                <div key={day} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--color-text-secondary)' }}>
+                                  <span style={{ fontWeight: 600 }}>{day}</span>
+                                  <span style={{ color: h === 'Closed' ? '#ef4444' : 'var(--color-primary)' }}>{h || '—'}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Gallery preview */}
+                  {biz.gallery && biz.gallery.length > 0 && (
+                    <div style={{ marginBottom: 'var(--space-6)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-3)' }}>
+                        <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>📸 Shared Media ({biz.gallery.length} photo{biz.gallery.length !== 1 ? 's' : ''})</h2>
+                        <button type="button" className="btn btn-outline btn-sm" onClick={() => setActiveTab('media')}>Manage Media</button>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 'var(--space-3)' }}>
+                        {biz.gallery.map((url, i) => (
+                          <div key={i} style={{ aspectRatio: '1', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border-light)' }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={url} alt={`Media ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mini analytics */}
+                  <div style={{ background: '#f8fafc', border: '1px solid var(--color-border-light)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-6)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
+                      <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>📊 Quick Analytics</h2>
+                      <button type="button" className="btn btn-outline btn-sm" onClick={() => setActiveTab('stats')}>Full Analytics →</button>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--space-4)' }}>
+                      {[
+                        { label: 'Profile Views', value: views, icon: '👁️', color: '#3b82f6' },
+                        { label: 'WhatsApp Clicks', value: waClicks, icon: '💬', color: '#22c55e' },
+                        { label: 'Conversion Rate', value: `${convRate}%`, icon: '📈', color: '#f59e0b' },
+                        { label: 'Profile Score', value: `${profileScore}%`, icon: '⭐', color: '#8b5cf6' },
+                      ].map(stat => (
+                        <div key={stat.label} style={{ background: 'white', border: '1px solid var(--color-border-light)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', textAlign: 'center' }}>
+                          <div style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{stat.icon}</div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: stat.color, lineHeight: 1 }}>{stat.value}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem', fontWeight: 600 }}>{stat.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
 
             {activeTab === 'stats' && hasBusiness && (() => {
               const biz = businesses[0];
