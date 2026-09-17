@@ -1,0 +1,291 @@
+/* ================================================================
+   StatesDropdown — location picker for Nigerian states
+================================================================ */
+
+/* Wrapper */
+.wrapper {
+  flex-shrink: 0;
+}
+.wrapperHero {
+  /* Inline with the search bar */
+}
+.wrapperPage {
+  position: relative;
+}
+
+/* Trigger button */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+  border: none;
+  line-height: 1;
+}
+
+.triggerHero {
+  height: 54px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: var(--color-white);
+  backdrop-filter: blur(12px);
+}
+.triggerHero:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.triggerPage {
+  height: 48px;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-xs);
+}
+.triggerPage:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.triggerIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.triggerLabel {
+  font-size: var(--font-size-sm);
+}
+
+.triggerChevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+.triggerChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Backdrop */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+  animation: fadeIn 0.2s ease both;
+}
+
+/* Panel (dropdown) */
+.panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  z-index: 100;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  animation: fadeInUp 0.2s ease both;
+  max-height: 480px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gray-300) transparent;
+}
+.panel::-webkit-scrollbar {
+  width: 6px;
+}
+.panel::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 3px;
+}
+
+.panelHero {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  max-width: 90vw;
+  max-height: calc(100vh - 120px);
+  background: var(--color-white);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  color: var(--color-text-primary);
+  /* Override absolute positioning animation */
+  animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.panelPage {
+  left: 0;
+  width: 560px;
+  max-width: 90vw;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Panel header */
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-light);
+  position: sticky;
+  top: 0;
+  background: inherit;
+  z-index: 2;
+}
+
+.panelTitle {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.panelClose {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+.panelClose svg {
+  width: 16px;
+  height: 16px;
+}
+.panelClose:hover {
+  background: var(--color-gray-100);
+  color: var(--color-text-primary);
+}
+
+/* Grid of letter groups */
+.panelGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: var(--space-4);
+  gap: var(--space-2);
+}
+.panelHero .panelGrid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Letter group */
+.letterGroup {
+  padding: var(--space-2) var(--space-3);
+}
+
+.letterLabel {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--space-1);
+  padding-bottom: var(--space-1);
+  border-bottom: 2px solid var(--color-primary-light);
+}
+
+.letterStates {
+  display: flex;
+  flex-direction: column;
+}
+
+/* State link */
+.stateLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+.stateLink:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  padding-left: 12px;
+}
+
+.stateArrow {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+.stateLink:hover .stateArrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* ================================================================
+   Responsive
+================================================================ */
+@media (max-width: 768px) {
+  .panelHero .panelGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .panelGrid,
+  .panelHero .panelGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .panelHero,
+  .panelPage {
+    width: calc(100vw - var(--space-6));
+    max-width: 100vw;
+  }
+  .panelPage {
+    right: 50%;
+    left: auto;
+    transform: translateX(50%);
+  }
+  /* panelHero is already fixed centered */
+  
+  .triggerLabel {
+    display: none;
+  }
+  .trigger {
+    padding: 0 var(--space-3);
+  }
+}
+
+@media (max-width: 400px) {
+  .panelGrid,
+  .panelHero .panelGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}

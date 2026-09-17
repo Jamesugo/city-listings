@@ -38,7 +38,6 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
-  const accountType = (formData.get('accountType') as string) || 'owner';
   const supabase = await createClient();
 
   const { data: authData, error } = await supabase.auth.signUp({
@@ -51,19 +50,35 @@ export async function signup(formData: FormData) {
   }
 
   if (authData.user) {
-    // Insert into public.users with role based on account type selection
+    // Insert into public.users with role 'owner'
     await supabase.from('users').upsert({
       id: authData.user.id,
       email: authData.user.email,
-      role: accountType === 'user' ? 'user' : 'owner',
+      role: 'owner',
     });
   }
 
-  // Visitors go to homepage, business owners go to their dashboard
-  if (accountType === 'user') {
-    return redirect('/');
-  }
   return redirect('/dashboard');
+}
+
+export async function signInWithGoogle() {
+  const supabase = await createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${siteUrl}/auth/callback`,
+    },
+  });
+
+  if (data.url) {
+    redirect(data.url);
+  }
+  
+  if (error) {
+    return redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
+  }
 }
 
 export async function logout() {

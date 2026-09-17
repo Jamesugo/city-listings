@@ -33,8 +33,18 @@ export async function GET(request: Request) {
       }
     )
     
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error && sessionData.user) {
+      // Ensure the user exists in the public.users table (for OAuth sign-ups)
+      await supabase.from('users').upsert(
+        {
+          id: sessionData.user.id,
+          email: sessionData.user.email,
+          role: 'owner', // Defaulting to owner for simplicity as requested
+        },
+        { onConflict: 'id', ignoreDuplicates: true }
+      )
+
       return NextResponse.redirect(`${origin}${next}`)
     }
   }

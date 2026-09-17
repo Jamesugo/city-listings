@@ -2,13 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getCategories, getCities, getFeaturedBusinesses } from '@/lib/data';
 import BusinessCardComponent from '@/components/BusinessCardComponent';
+import StatesDropdown from '@/components/StatesDropdown';
 import { Star, MapPin } from '@/components/Icons';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
-  title: 'NaijaList — Nigeria Business Directory | Find Local Businesses in Enugu',
+  title: 'NaijaList — Nigeria Business Directory | Find Local Businesses Across Nigeria',
   description:
-    'Discover trusted local businesses in Enugu State, Nigeria. Restaurants, clinics, professionals, shops and more — with WhatsApp contact, verified listings, and real reviews.',
+    'Discover trusted local businesses across Nigeria. Restaurants, clinics, professionals, shops and more — with WhatsApp contact, verified listings, and real reviews.',
 };
 
 export default async function HomePage() {
@@ -24,44 +25,47 @@ export default async function HomePage() {
       <section className={styles.hero} aria-labelledby="hero-heading">
         <div className={styles.heroGlow} aria-hidden="true" />
         <div className={`container ${styles.heroContent}`}>
-          <div className={styles.heroBadge}>
+          {/* <div className={styles.heroBadge}>
             <span>🇳🇬</span> Enugu State Business Directory
-          </div>
+          </div> */}
           <h1 id="hero-heading" className={styles.heroTitle}>
             Find Any Business<br />
-            <span className={styles.heroTitleGreen}>Near You in Enugu</span>
+            <span className={styles.heroTitleGreen}>Across Nigeria</span>
           </h1>
           <p className={styles.heroSub}>
             250+ verified local businesses — restaurants, clinics, professionals, shops, and more.
             Contact via WhatsApp in one tap.
           </p>
 
-          {/* Search bar */}
-          <form
-            action="/businesses"
-            method="GET"
-            className={styles.searchForm}
-            role="search"
-            aria-label="Search businesses"
-          >
-            <div className={styles.searchInputWrapper}>
-              <svg className={styles.searchIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                type="search"
-                name="q"
-                id="hero-search"
-                className={`form-input ${styles.searchInput}`}
-                placeholder="Search businesses, e.g. mechanic, pharmacy…"
-                autoComplete="off"
-                aria-label="Search for businesses"
-              />
-            </div>
-            <button type="submit" className={`btn btn-primary ${styles.searchBtn}`} id="hero-search-btn">
-              Search
-            </button>
-          </form>
+          {/* Search bar + States dropdown */}
+          <div className={styles.searchRow}>
+            <StatesDropdown variant="hero" />
+            <form
+              action="/businesses"
+              method="GET"
+              className={styles.searchForm}
+              role="search"
+              aria-label="Search businesses"
+            >
+              <div className={styles.searchInputWrapper}>
+                <svg className={styles.searchIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input
+                  type="search"
+                  name="q"
+                  id="hero-search"
+                  className={`form-input ${styles.searchInput}`}
+                  placeholder="Search businesses, e.g. mechanic, pharmacy…"
+                  autoComplete="off"
+                  aria-label="Search for businesses"
+                />
+              </div>
+              <button type="submit" className={`btn btn-primary ${styles.searchBtn}`} id="hero-search-btn">
+                Search
+              </button>
+            </form>
+          </div>
 
           {/* Quick links */}
           <div className={styles.quickLinks} aria-label="Quick category links">

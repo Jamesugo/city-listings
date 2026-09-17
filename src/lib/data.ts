@@ -100,6 +100,17 @@ export async function getCityBySlug(slug: string): Promise<City | undefined> {
   };
 }
 
+export async function getCitiesGroupedByState(): Promise<Map<string, City[]>> {
+  const cities = await getCities();
+  const grouped = new Map<string, City[]>();
+  for (const city of cities) {
+    const stateName = city.stateName || 'Unknown';
+    if (!grouped.has(stateName)) grouped.set(stateName, []);
+    grouped.get(stateName)!.push(city);
+  }
+  return grouped;
+}
+
 // ============================================================
 // Business listing — supports FTS, pagination, filters
 // ============================================================

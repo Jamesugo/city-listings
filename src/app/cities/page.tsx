@@ -1,16 +1,28 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getCities } from '@/lib/data';
+import { NIGERIAN_STATES, groupStatesByLetter } from '@/lib/nigerianStates';
 import { MapPin } from '@/components/Icons';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
-  title: 'Cities in Enugu State',
-  description: 'Browse local businesses by city across Enugu State, Nigeria. Enugu, Nsukka, Awgu, Oji River, Agbani and more.',
+  title: 'Browse by State & City — NaijaList Nigeria Directory',
+  description:
+    'Browse local businesses by state and city across Nigeria. Find businesses in Lagos, Enugu, Abuja, Kano, Rivers and all 36 states.',
 };
 
 export default async function CitiesPage() {
   const cities = await getCities();
+
+  // Group cities by state name for matching
+  const citiesByState = new Map<string, typeof cities>();
+  for (const city of cities) {
+    const key = city.stateName || '';
+    if (!citiesByState.has(key)) citiesByState.set(key, []);
+    citiesByState.get(key)!.push(city);
+  }
+
+  const grouped = groupStatesByLetter(NIGERIAN_STATES);
 
   return (
     <div className={styles.page}>
@@ -19,44 +31,84 @@ export default async function CitiesPage() {
           <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
             <Link href="/">Home</Link>
             <span aria-hidden="true">›</span>
-            <span>Cities</span>
+            <span>States & Cities</span>
           </nav>
-          <h1 className={styles.title}>Cities in Enugu State</h1>
+          <h1 className={styles.title}>Browse by State & City</h1>
           <p className={styles.subtitle}>
-            Browse businesses by city across Enugu State
+            Explore businesses across all 36 Nigerian states and FCT Abuja
           </p>
         </div>
       </div>
 
       <div className="container">
-        <div className={styles.grid} role="list" aria-label="Cities">
-          {cities.map((city, i) => (
-            <Link
-              key={city.slug}
-              href={`/cities/${city.slug}`}
-              className={styles.card}
-              role="listitem"
-              id={`city-page-${city.slug}`}
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <div className={styles.cardLeft}>
-                <MapPin className={styles.cardPin} aria-hidden="true" />
-                <div>
-                  <h2 className={styles.cardName}>{city.name}</h2>
-                  <p className={styles.cardState}>{city.stateName} State</p>
-                </div>
-              </div>
-              <div className={styles.cardRight}>
-                <span className={styles.cardCount}>
-                  {city.businessCount ?? 0} businesses
-                </span>
-                <svg className={styles.cardArrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {/* Alphabetical letter groups */}
+        {Array.from(grouped.entries()).map(([letter, states]) => (
+          <div key={letter} className={styles.letterSection}>
+            <div className={styles.letterHeader}>
+              <span className={styles.letterBadge}>{letter}</span>
+            </div>
+
+            <div className={styles.statesGrid}>
+              {states.map((state) => {
+                const stateCities = citiesByState.get(state.name) || [];
+                const totalBusinesses = stateCities.reduce(
+                  (sum, c) => sum + (c.businessCount ?? 0),
+                  0
+                );
+
+                return (
+                  <div key={state.slug} className={styles.stateCard} id={`state-${state.slug}`}>
+                    <div className={styles.stateHeader}>
+                      <div className={styles.stateInfo}>
+                        <h2 className={styles.stateName}>{state.name} State</h2>
+                        <span className={styles.stateMeta}>
+                          {stateCities.length} {stateCities.length === 1 ? 'city' : 'cities'} · {totalBusinesses} {totalBusinesses === 1 ? 'business' : 'businesses'}
+                        </span>
+                      </div>
+                      <MapPin className={styles.statePin} aria-hidden="true" />
+                    </div>
+
+                    {stateCities.length > 0 ? (
+                      <div className={styles.cityList}>
+                        {stateCities.map((city) => (
+                          <Link
+                            key={city.slug}
+                            href={`/cities/${city.slug}`}
+                            className={styles.cityItem}
+                            id={`city-${city.slug}`}
+                          >
+                            <span className={styles.cityDot} aria-hidden="true" />
+                            <span className={styles.cityName}>{city.name}</span>
+                            <span className={styles.cityCount}>
+                              {city.businessCount ?? 0}
+                            </span>
+                            <svg
+                              className={styles.cityArrow}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="m9 18 6-6-6-6" />
+                            </svg>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className={styles.comingSoon}>
+                        <span className={styles.comingSoonIcon}>🚀</span>
+                        <span>Coming soon</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

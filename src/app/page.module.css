@@ -66,11 +66,22 @@
   line-height: var(--line-height-relaxed);
 }
 
+/* Search row — dropdown + form side by side */
+.searchRow {
+  display: flex;
+  width: 100%;
+  max-width: 740px;
+  gap: var(--space-2);
+  align-items: flex-start;
+  flex-wrap: wrap;
+  position: relative;
+}
+
 /* Search */
 .searchForm {
   display: flex;
-  width: 100%;
-  max-width: 620px;
+  flex: 1;
+  min-width: 0;
   gap: var(--space-2);
   flex-wrap: wrap;
 }
@@ -458,6 +469,9 @@
 }
 
 @media (min-width: 640px) {
+  .searchRow {
+    flex-wrap: nowrap;
+  }
   .searchForm {
     flex-wrap: nowrap;
   }
