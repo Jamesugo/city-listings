@@ -51,3 +51,6 @@ export const Sparkles = createFontIcon('fa-solid fa-wand-magic-sparkles');
 export const ClipboardList = createFontIcon('fa-solid fa-clipboard-list');
 export const LogOut = createFontIcon('fa-solid fa-right-from-bracket');
 export const User = createFontIcon('fa-solid fa-user');
+export const Heart = createFontIcon('fa-solid fa-heart');
+export const Hand = createFontIcon('fa-solid fa-hands-clapping');
+export const Smile = createFontIcon('fa-solid fa-face-smile');

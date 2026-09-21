@@ -21,7 +21,7 @@ const TIERS = [
       'Customer reviews',
     ],
     cta: 'Get Started Free',
-    ctaHref: '/admin/login',
+    ctaHref: '/admin/login?tier=free',
     highlight: false,
   },
   {
@@ -36,8 +36,8 @@ const TIERS = [
       'Priority in category pages',
       'Cover image upload',
     ],
-    cta: 'Join Waitlist',
-    ctaHref: '/admin/login',
+    cta: 'Get Started',
+    ctaHref: '/admin/login?tier=pro',
     highlight: true,
   },
   {
@@ -53,8 +53,8 @@ const TIERS = [
       'Business hours display',
       'Analytics dashboard',
     ],
-    cta: 'Join Waitlist',
-    ctaHref: '/admin/login',
+    cta: 'Get Started',
+    ctaHref: '/admin/login?tier=premium',
     highlight: false,
   },
 ];

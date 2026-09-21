@@ -4,7 +4,12 @@ import { createClient } from '@/lib/supabase/server';
 import type { Business } from '@/lib/types';
 import OwnerDashboard from './OwnerDashboard';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tier?: string }>;
+}) {
+  const { tier } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -38,6 +43,7 @@ export default async function DashboardPage() {
       categories={categories}
       cities={cities}
       states={states}
+      initialTier={tier}
     />
   );
 }

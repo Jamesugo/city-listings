@@ -64,9 +64,47 @@ export interface Business {
   updatedAt: string;
   pageViews?: number;
   whatsappClicks?: number;
-  // Phase 2+
+  // Advanced Features
   averageRating?: number;
   reviewCount?: number;
+  lat?: number;
+  lng?: number;
+  // Subscriptions & Leads
+  subscriptionTier?: 'free' | 'pro' | 'premium';
+  callClicks?: number;
+  videoGallery?: string[];
+}
+
+export interface User {
+  id: string;
+  email: string;
+  phone?: string;
+  role: 'user' | 'owner' | 'admin';
+  business_id?: string;
+  created_at: string;
+}
+
+export interface Review {
+  id: string;
+  business_id: string;
+  user_id: string;
+  rating: number;
+  body: string;
+  owner_response?: string;
+  is_flagged: boolean;
+  created_at: string;
+  // Joined fields
+  user?: User;
+  business?: BusinessCard;
+}
+
+export interface BusinessPromo {
+  id: string;
+  business_id: string;
+  content: string;
+  image_url?: string;
+  created_at: string;
+  active_until?: string;
 }
 
 // Lightweight card variant used in listing grids
@@ -89,7 +127,10 @@ export type BusinessCard = Pick<
   | 'averageRating'
   | 'reviewCount'
   | 'lastConfirmedAt'
->;
+  | 'lat'
+  | 'lng'
+  | 'subscriptionTier'
+> & { distance_km?: number };
 
 // Admin form payload
 export interface BusinessFormData {
@@ -120,4 +161,9 @@ export interface BusinessFilters {
   featured?: boolean;
   page?: number;
   limit?: number;
+  lat?: number;
+  lng?: number;
+  radius?: number;
+  minRating?: number;
+  openNow?: boolean;
 }

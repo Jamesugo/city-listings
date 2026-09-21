@@ -13,6 +13,9 @@ export async function login(formData: FormData) {
     password,
   });
 
+  const tier = formData.get('tier') as string;
+  const queryString = tier ? `?tier=${tier}` : '';
+
   if (error) {
     return redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
   }
@@ -28,11 +31,11 @@ export async function login(formData: FormData) {
     if (dbUser?.role === 'user') {
       return redirect('/');
     } else if (dbUser?.role === 'owner') {
-      return redirect('/dashboard');
+      return redirect(`/dashboard${queryString}`);
     }
   }
 
-  return redirect('/admin');
+  return redirect(`/admin${queryString}`);
 }
 
 export async function signup(formData: FormData) {
@@ -44,6 +47,9 @@ export async function signup(formData: FormData) {
     email,
     password,
   });
+
+  const tier = formData.get('tier') as string;
+  const queryString = tier ? `?tier=${tier}` : '';
 
   if (error) {
     return redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
@@ -58,7 +64,7 @@ export async function signup(formData: FormData) {
     });
   }
 
-  return redirect('/dashboard');
+  return redirect(`/dashboard${queryString}`);
 }
 
 export async function signInWithGoogle() {

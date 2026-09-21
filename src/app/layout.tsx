@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import FloatingNearMe from '@/components/FloatingNearMe';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -61,6 +62,7 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <FloatingNearMe />
       </body>
     </html>
   );

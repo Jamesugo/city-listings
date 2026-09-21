@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getBusinesses, getBusinessCount } from '@/lib/data';
 import BusinessCardComponent from '@/components/BusinessCardComponent';
+import BusinessSearchFilters from '@/components/BusinessSearchFilters';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -15,6 +16,10 @@ interface SearchParams {
   city?: string;
   featured?: string;
   page?: string;
+  lat?: string;
+  lng?: string;
+  minRating?: string;
+  openNow?: string;
 }
 
 const PAGE_SIZE = 24;
@@ -24,7 +29,7 @@ export default async function BusinessesPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { q, category, city, featured, page: pageParam } = await searchParams;
+  const { q, category, city, featured, page: pageParam, lat, lng, minRating, openNow } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? '1', 10));
 
   const [businesses, totalCount] = await Promise.all([
@@ -35,6 +40,10 @@ export default async function BusinessesPage({
       searchQuery: q?.trim() || undefined,
       page,
       limit: PAGE_SIZE,
+      lat: lat ? parseFloat(lat) : undefined,
+      lng: lng ? parseFloat(lng) : undefined,
+      minRating: minRating ? parseFloat(minRating) : undefined,
+      openNow: openNow === 'true',
     }),
     getBusinessCount({
       categorySlug: category,
@@ -58,6 +67,10 @@ export default async function BusinessesPage({
     if (category) params.set('category', category);
     if (city) params.set('city', city);
     if (featured) params.set('featured', featured);
+    if (lat) params.set('lat', lat);
+    if (lng) params.set('lng', lng);
+    if (minRating) params.set('minRating', minRating);
+    if (openNow) params.set('openNow', openNow);
     params.set('page', String(p));
     return `/businesses?${params.toString()}`;
   };
@@ -84,27 +97,7 @@ export default async function BusinessesPage({
 
       <div className="container">
         {/* Search bar */}
-        <form action="/businesses" method="GET" className={styles.filterBar} role="search">
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            id="businesses-search"
-            className={`form-input ${styles.searchInput}`}
-            placeholder="Search businesses…"
-            aria-label="Search businesses"
-          />
-          {category && <input type="hidden" name="category" value={category} />}
-          {city && <input type="hidden" name="city" value={city} />}
-          <button type="submit" className="btn btn-primary" id="businesses-search-btn">
-            Search
-          </button>
-          {(q || category || city) && (
-            <Link href="/businesses" className="btn btn-ghost btn-sm" id="clear-filters-btn">
-              Clear filters
-            </Link>
-          )}
-        </form>
+        <BusinessSearchFilters />
 
         {/* Results */}
         {businesses.length > 0 ? (

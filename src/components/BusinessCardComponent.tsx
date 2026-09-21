@@ -42,8 +42,10 @@ export default function BusinessCardComponent({ business, priority = false }: Pr
   const placeholder = CATEGORY_PLACEHOLDERS[business.categorySlug] ?? '🏢';
   const waUrl = business.whatsapp ? `https://wa.me/${business.whatsapp}` : null;
 
+  const isPro = business.subscriptionTier === 'pro' || business.subscriptionTier === 'premium';
+
   return (
-    <article className={`card ${styles.card}`} id={`biz-card-${business.id}`}>
+    <article className={`card ${styles.card} ${isPro ? styles.sponsoredCard : ''}`} id={`biz-card-${business.id}`}>
       {/* Image */}
       <Link
         href={`/businesses/${business.slug}`}
@@ -70,6 +72,11 @@ export default function BusinessCardComponent({ business, priority = false }: Pr
           {business.isFeatured && (
             <span className={styles.featuredBadge} aria-label="Featured listing">
               <Star size={12} style={{ marginRight: '0.25rem' }} /> Featured
+            </span>
+          )}
+          {isPro && !business.isFeatured && (
+            <span className={styles.sponsoredBadge} aria-label="Sponsored listing">
+              ⚡ Sponsored
             </span>
           )}
         </div>
@@ -119,6 +126,13 @@ export default function BusinessCardComponent({ business, priority = false }: Pr
         {business.lastConfirmedAt && (
           <p className={styles.confirmed}>
             ✓ Confirmed active {timeAgo(business.lastConfirmedAt)}
+          </p>
+        )}
+
+        {/* Distance (when using Near Me) */}
+        {business.distance_km !== undefined && business.distance_km !== null && (
+          <p className={styles.distance}>
+            📍 {business.distance_km < 1 ? `${Math.round(business.distance_km * 1000)}m` : `${business.distance_km.toFixed(1)}km`} away
           </p>
         )}
 

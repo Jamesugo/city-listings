@@ -8,18 +8,20 @@ import { upsertBusiness } from '../admin/actions';
 import { uploadMedia, deleteMedia } from '../admin/upload';
 import { logout } from '../admin/login/actions';
 import styles from './dashboard.module.css';
-import { ImagePlus, Trash2, X, Loader2, Eye, Phone, User, LogOut, LayoutDashboard, Lightbulb, Save, CheckCircle } from '@/components/Icons';
+import { ImagePlus, Trash2, X, Loader2, Eye, Phone, User, LogOut, LayoutDashboard, Lightbulb, Save, CheckCircle, Landmark } from '@/components/Icons';
 
 export default function OwnerDashboard({
   initialBusinesses,
   categories,
   cities,
   states,
+  initialTier,
 }: {
   initialBusinesses: Business[];
   categories: Category[];
   cities: City[];
   states: State[];
+  initialTier?: string;
 }) {
   const [businesses] = useState<Business[]>(initialBusinesses);
   const hasBusiness = businesses.length > 0;
@@ -34,7 +36,7 @@ export default function OwnerDashboard({
   const [selectedStateName, setSelectedStateName] = useState(initialStateName);
   const filteredCities = cities.filter(c => c.stateName === selectedStateName);
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'myprofile' | 'media' | 'stats'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'myprofile' | 'media' | 'stats' | 'billing'>('profile');
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -64,6 +66,7 @@ export default function OwnerDashboard({
     email: businesses[0].email ?? '',
     website: businesses[0].website ?? '',
     description: businesses[0].description,
+    subscriptionTier: businesses[0].subscriptionTier || 'free',
     hours: (businesses[0].hours as Record<string, string>) || { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' },
   } : {
     name: '',
@@ -76,7 +79,8 @@ export default function OwnerDashboard({
     email: '',
     website: '',
     description: '',
-    hours: { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' },
+    subscriptionTier: (initialTier as 'free' | 'pro' | 'premium') || 'free',
+    hours: { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' } as Record<string, string>,
   };
 
   const [formData, setFormData] = useState(defaultFormData);
@@ -100,6 +104,7 @@ export default function OwnerDashboard({
         email: formData.email,
         website: formData.website,
         description: formData.description,
+        subscription_tier: formData.subscriptionTier,
         hours: formData.hours,
       };
 
@@ -165,6 +170,14 @@ export default function OwnerDashboard({
                   onClick={() => setActiveTab('stats')}
                 >
                   <LayoutDashboard size={18} /> Analytics & Stats
+                </button>
+              )}
+              {hasBusiness && (
+                <button 
+                  className={`${styles.menuItem} ${activeTab === 'billing' ? styles.active : ''}`}
+                  onClick={() => setActiveTab('billing')}
+                >
+                  <Landmark size={18} /> Billing & Subscription
                 </button>
               )}
               <hr style={{ margin: 'var(--space-2) 0', border: '0', borderTop: '1px solid var(--color-border-light)' }} />
@@ -463,7 +476,11 @@ export default function OwnerDashboard({
                     
                     <div>
                       <label className="form-label" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Gallery Images</label>
-                      <p className={styles.sectionSubtitle} style={{ marginBottom: '1rem' }}>Add up to 10 photos of your work, store, or team.</p>
+                      <p className={styles.sectionSubtitle} style={{ marginBottom: '1rem' }}>
+                        {businesses[0]?.subscriptionTier === 'free' 
+                          ? 'Free tier limit: Max 5 photos. Upgrade to Pro for unlimited.'
+                          : 'Add photos of your work, store, or team.'}
+                      </p>
                       
                       <div className={styles.mediaGrid}>
                         {galleryPreviews.map((url, i) => (
@@ -489,38 +506,53 @@ export default function OwnerDashboard({
                           </div>
                         ))}
                         
-                        <div
-                          className={styles.dropzone}
-                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '140px', padding: '1rem' }}
-                          onClick={() => galleryInputRef.current?.click()}
-                        >
-                          <input
-                            ref={galleryInputRef}
-                            type="file"
-                            accept="image/*,video/*"
-                            multiple
-                            style={{ display: 'none' }}
-                            onChange={async (e) => {
-                              const files = e.target.files;
-                              if (!files) return;
-                              setUploading(true);
-                              for (let i = 0; i < files.length; i++) {
-                                const fd = new FormData();
-                                fd.append('file', files[i]);
-                                fd.append('businessId', editingId);
-                                fd.append('mediaType', 'gallery');
-                                const res = await uploadMedia(fd);
-                                if (res.url) setGalleryPreviews(prev => [...prev, res.url!]);
-                                else if (res.error) showToast('error', res.error);
-                              }
-                              setUploading(false);
-                            }}
-                          />
-                          <div className={styles.dropzoneContent}>
-                            {uploading ? <Loader2 size={24} className="animate-spin" /> : <ImagePlus size={24} />}
-                            <p style={{ fontSize: '0.85rem' }}>{uploading ? '...' : 'Add More'}</p>
+                        {businesses[0]?.subscriptionTier !== 'free' || galleryPreviews.length < 5 ? (
+                          <div
+                            className={styles.dropzone}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '140px', padding: '1rem' }}
+                            onClick={() => galleryInputRef.current?.click()}
+                          >
+                            <input
+                              ref={galleryInputRef}
+                              type="file"
+                              accept="image/*,video/*"
+                              multiple
+                              style={{ display: 'none' }}
+                              onChange={async (e) => {
+                                const files = e.target.files;
+                                if (!files) return;
+                                
+                                const maxAllowed = businesses[0]?.subscriptionTier === 'free' ? 5 - galleryPreviews.length : files.length;
+                                const filesToUpload = Array.from(files).slice(0, maxAllowed);
+                                
+                                if (filesToUpload.length < files.length) {
+                                  showToast('error', 'Free tier is limited to 5 photos. Upgrade for more.');
+                                }
+                                
+                                setUploading(true);
+                                for (let i = 0; i < filesToUpload.length; i++) {
+                                  const fd = new FormData();
+                                  fd.append('file', filesToUpload[i]);
+                                  fd.append('businessId', editingId);
+                                  fd.append('mediaType', 'gallery');
+                                  const res = await uploadMedia(fd);
+                                  if (res.url) setGalleryPreviews(prev => [...prev, res.url!]);
+                                  else if (res.error) showToast('error', res.error);
+                                }
+                                setUploading(false);
+                              }}
+                            />
+                            <div className={styles.dropzoneContent}>
+                              {uploading ? <Loader2 size={24} className="animate-spin" /> : <ImagePlus size={24} />}
+                              <p style={{ fontSize: '0.85rem' }}>{uploading ? '...' : 'Add More'}</p>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '140px', padding: '1rem', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-lg)', background: 'var(--color-gray-50)', color: 'var(--color-text-secondary)', textAlign: 'center' }}>
+                            <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>Free tier limit reached.</p>
+                            <button type="button" className="btn btn-outline btn-sm" onClick={() => setActiveTab('billing')}>Upgrade</button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -817,6 +849,80 @@ export default function OwnerDashboard({
                         <li style={{ fontSize: '0.85rem', color: '#166534', fontWeight: 600 }}>🎉 Your profile is 100% complete! You are set for maximum visibility.</li>
                       )}
                     </ul>
+                  </div>
+                </>
+              );
+            })()}
+
+            {activeTab === 'billing' && hasBusiness && (() => {
+              const biz = businesses[0];
+              const tier = formData.subscriptionTier || 'free';
+              
+              const tiers = [
+                { id: 'free', name: 'Free Listing', price: 'Free', features: ['5 Photos', 'Basic Listing', 'Customer Reviews'] },
+                { id: 'pro', name: 'Pro Tier', price: '₦10,000 /mo', features: ['Unlimited Photos', 'Higher Search Ranking', 'Verified Badge', 'Promo Posts'] },
+                { id: 'premium', name: 'Premium Tier', price: '₦25,000 /mo', features: ['All Pro Features', 'Top Search Placement', 'Analytics Dashboard', 'Priority Support'] }
+              ];
+              
+              const handleUpgrade = (selectedTier: string) => {
+                if (tier === selectedTier) return;
+                setFormData({ ...formData, subscriptionTier: selectedTier as 'free' | 'pro' | 'premium' });
+                
+                // Save it immediately
+                startTransition(async () => {
+                  const dbData = {
+                    id: editingId!,
+                    subscription_tier: selectedTier
+                  };
+                  const result = await upsertBusiness(dbData);
+                  if (result.error) {
+                    showToast('error', 'Failed to update subscription');
+                  } else {
+                    showToast('success', `Successfully updated to ${selectedTier.toUpperCase()} tier!`);
+                    router.refresh();
+                  }
+                });
+              };
+              
+              return (
+                <>
+                  <div className={styles.sectionHeader}>
+                    <h1 className={styles.sectionTitle}>Billing & Subscription</h1>
+                    <p className={styles.sectionSubtitle}>Manage your plan and features.</p>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-6)', marginBottom: 'var(--space-8)' }}>
+                    {tiers.map(t => (
+                      <div key={t.id} style={{ 
+                        border: tier === t.id ? '2px solid var(--color-primary)' : '1px solid var(--color-border-light)', 
+                        borderRadius: 'var(--radius-xl)', 
+                        padding: 'var(--space-6)', 
+                        background: 'white', 
+                        display: 'flex', flexDirection: 'column', 
+                        boxShadow: tier === t.id ? 'var(--shadow-md)' : 'var(--shadow-sm)' 
+                      }}>
+                        {tier === t.id && <span style={{ background: 'var(--color-primary)', color: 'white', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.75rem', borderRadius: '999px', alignSelf: 'flex-start', marginBottom: '0.5rem' }}>Current Plan</span>}
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.25rem' }}>{t.name}</h3>
+                        <p style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--color-primary)', margin: '0 0 1rem' }}>{t.price}</p>
+                        
+                        <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem', flex: 1 }}>
+                          {t.features.map((f, i) => (
+                            <li key={i} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
+                              <span style={{ color: 'var(--color-primary)' }}>✓</span> {f}
+                            </li>
+                          ))}
+                        </ul>
+                        
+                        <button 
+                          className={`btn ${tier === t.id ? 'btn-outline' : 'btn-primary'}`} 
+                          style={{ width: '100%', opacity: tier === t.id ? 0.5 : 1 }} 
+                          disabled={tier === t.id || isPending}
+                          onClick={() => handleUpgrade(t.id)}
+                        >
+                          {isPending && tier !== t.id ? 'Updating...' : tier === t.id ? 'Active' : 'Select Plan'}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </>
               );

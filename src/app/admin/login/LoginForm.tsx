@@ -33,7 +33,7 @@ function SubmitButton({ mode }: { mode: 'login' | 'signup' | 'forgot' }) {
   );
 }
 
-export default function LoginForm({ error, message }: { error?: string; message?: string }) {
+export default function LoginForm({ error, message, tier }: { error?: string; message?: string; tier?: string }) {
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const router = useRouter();
   const pathname = usePathname();
@@ -118,6 +118,8 @@ export default function LoginForm({ error, message }: { error?: string; message?
             </div>
           </>
         )}
+        
+        {tier && <input type="hidden" name="tier" value={tier} />}
         
         <div className="form-group">
           <label htmlFor="email" className="form-label">Email Address</label>

@@ -5,6 +5,11 @@
   position: relative;
 }
 
+.sponsoredCard {
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.15), var(--shadow-sm);
+}
+
 /* Image */
 .imageLink {
   display: block;
@@ -53,6 +58,19 @@
   left: var(--space-3);
   background: var(--color-accent);
   color: var(--color-gray-900);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 0.2em 0.6em;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+}
+
+.sponsoredBadge {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   padding: 0.2em 0.6em;
@@ -128,6 +146,12 @@
 .confirmed {
   font-size: var(--font-size-xs);
   color: var(--color-success);
+  font-weight: var(--font-weight-medium);
+}
+
+.distance {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
   font-weight: var(--font-weight-medium);
 }
 

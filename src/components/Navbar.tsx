@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { Building2, FolderOpen, Globe2, KeyRound, Plus, MapPin, User as UserIcon } from '@/components/Icons';
@@ -28,6 +28,10 @@ export default function Navbar() {
   const [dashboardHref, setDashboardHref] = useState('/dashboard');
   const [authReady, setAuthReady] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isHome = pathname === '/';
+  const isTransparent = isHome && !scrolled && !menuOpen;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -68,21 +72,41 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}
+      className={`${styles.navbar} ${scrolled ? styles.scrolled : ''} ${isTransparent ? styles.transparent : ''}`}
       role="navigation"
       aria-label="Main navigation"
     >
       <div className={`container ${styles.inner}`}>
         {/* Logo */}
-        <Link href="/" className={styles.logo} onClick={closeMenu} aria-label="NaijaList home">
-          <MapPin className={styles.logoIcon} size={24} style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
+        <Link href="/" className={`${styles.logo} ${isTransparent ? styles.transparentText : ''}`} onClick={closeMenu} aria-label="NaijaList home">
+          <MapPin className={styles.logoIcon} size={24} style={{ color: isTransparent ? 'white' : 'var(--color-primary)' }} aria-hidden="true" />
           <span className={styles.logoText}>
-            Naija<span className={styles.logoAccent}>List</span>
+            Naija<span className={styles.logoAccent} style={{ color: isTransparent ? 'white' : 'var(--color-primary)' }}>List</span>
           </span>
         </Link>
 
+        {/* Search Bar */}
+        <form action="/businesses" method="GET" className={styles.searchForm} role="search">
+          <div className={styles.searchInputWrapper}>
+            <svg className={styles.searchIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="search"
+              name="q"
+              className={styles.searchInput}
+              placeholder="Search businesses..."
+              autoComplete="off"
+              aria-label="Search businesses"
+            />
+          </div>
+        </form>
+
         {/* Desktop nav links */}
-        <div className={styles.links} role="menubar">
+        <div className={`${styles.links} ${isTransparent ? styles.transparentLinks : ''}`} role="menubar">
+          <Link href="/about" className={styles.link} role="menuitem">
+            About
+          </Link>
           <Link href="/businesses" className={styles.link} role="menuitem">
             All Businesses
           </Link>
@@ -91,9 +115,6 @@ export default function Navbar() {
           </Link>
           <Link href="/cities" className={styles.link} role="menuitem">
             Cities
-          </Link>
-          <Link href="/about" className={styles.link} role="menuitem">
-            About
           </Link>
           <Link href="/faq" className={styles.link} role="menuitem">
             FAQ
@@ -120,10 +141,10 @@ export default function Navbar() {
             </Link>
           ) : (
             <>
-              <Link href="/admin/login" className={styles.link} id="nav-signin" style={{ marginRight: '0.5rem' }}>
+              <Link href="/admin/login" className={`${styles.link} ${isTransparent ? styles.transparentText : ''}`} id="nav-signin" style={{ marginRight: '0.5rem' }}>
                 Sign In
               </Link>
-              <Link href="/list-business" className="btn btn-outline btn-sm" id="nav-list-business">
+              <Link href="/list-business" className={`btn btn-sm ${isTransparent ? 'btn-primary' : 'btn-outline'}`} id="nav-list-business">
                 List Your Business
               </Link>
             </>
@@ -148,6 +169,9 @@ export default function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className={styles.mobileMenu} id="mobile-menu" role="menu">
+          <Link href="/about" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
+            About
+          </Link>
           <Link href="/businesses" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
             <Building2 size={18} /> All Businesses
           </Link>
@@ -156,9 +180,6 @@ export default function Navbar() {
           </Link>
           <Link href="/cities" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
             <Globe2 size={18} /> Cities
-          </Link>
-          <Link href="/about" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
-            About
           </Link>
           <Link href="/faq" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
             FAQ
