@@ -20,9 +20,8 @@ export async function submitReview(formData: FormData) {
     return { error: 'Invalid review data' };
   }
 
-  // Ensure the user exists in public.users
   await supabase.from('users').upsert(
-    { id: user.id, email: user.email, role: 'user' },
+    { id: user.id, email: user.email },
     { onConflict: 'id' }
   );
 

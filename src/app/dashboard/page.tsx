@@ -17,20 +17,40 @@ export default async function DashboardPage({
     redirect('/admin/login');
   }
 
-  const { data: dbUser } = await supabase
+  const { data: dbUser, error: profileLookupError } = await supabase
     .from('users')
-    .select('role, business_id')
+    .select('business_id')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  if (!dbUser || dbUser.role !== 'owner') {
-    redirect('/admin/login');
+  if (profileLookupError) {
+    console.error('Failed to load user profile:', profileLookupError);
+    redirect(`/admin/login?error=${encodeURIComponent('Your account is signed in, but your user profile could not be loaded.')}`);
+  }
+
+  let ownerProfile = dbUser;
+  if (!ownerProfile) {
+    const { data: createdProfile, error: profileCreateError } = await supabase
+      .from('users')
+      .upsert(
+        { id: user.id, email: user.email, role: 'owner' },
+        { onConflict: 'id' }
+      )
+      .select('business_id')
+      .single();
+
+    if (profileCreateError || !createdProfile) {
+      console.error('Failed to create user profile:', profileCreateError);
+      redirect(`/admin/login?error=${encodeURIComponent('Your account is signed in, but your user profile could not be created.')}`);
+    }
+
+    ownerProfile = createdProfile;
   }
 
   let businesses: Business[] = [];
-  if (dbUser.business_id) {
+  if (ownerProfile.business_id) {
     const all = await getBusinessesAdmin();
-    businesses = all.filter(b => b.id === dbUser.business_id);
+    businesses = all.filter(b => b.id === ownerProfile.business_id);
   }
 
   const categories = await getCategories();

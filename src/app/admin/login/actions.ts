@@ -8,7 +8,7 @@ export async function login(formData: FormData) {
   const password = formData.get('password') as string;
   const supabase = await createClient();
 
-  const { data: authData, error } = await supabase.auth.signInWithPassword({
+  const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -20,22 +20,7 @@ export async function login(formData: FormData) {
     return redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
   }
 
-  // Check user role to redirect appropriately
-  if (authData.user) {
-    const { data: dbUser } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', authData.user.id)
-      .single();
-
-    if (dbUser?.role === 'user') {
-      return redirect('/');
-    } else if (dbUser?.role === 'owner') {
-      return redirect(`/dashboard${queryString}`);
-    }
-  }
-
-  return redirect(`/admin${queryString}`);
+  return redirect(`/dashboard${queryString}`);
 }
 
 export async function signup(formData: FormData) {
@@ -56,7 +41,6 @@ export async function signup(formData: FormData) {
   }
 
   if (authData.user) {
-    // Insert into public.users with role 'owner'
     await supabase.from('users').upsert({
       id: authData.user.id,
       email: authData.user.email,
@@ -67,14 +51,18 @@ export async function signup(formData: FormData) {
   return redirect(`/dashboard${queryString}`);
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData?: FormData) {
   const supabase = await createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
+  const tier = formData?.get('tier');
+  const next = typeof tier === 'string' && ['free', 'pro', 'premium'].includes(tier)
+    ? `/dashboard?tier=${encodeURIComponent(tier)}`
+    : '/dashboard';
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${siteUrl}/auth/callback`,
+      redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 

@@ -8,17 +8,10 @@ import { createClient } from '@/lib/supabase/client';
 import { Building2, FolderOpen, Globe2, KeyRound, Plus, MapPin, User as UserIcon } from '@/components/Icons';
 import styles from './Navbar.module.css';
 
-async function resolveDashboardHref(userId: string): Promise<string> {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', userId)
-    .single();
-
-  if (data?.role === 'admin') return '/admin';
-  if (data?.role === 'owner') return '/dashboard';
-  return '/';
+async function resolveDashboardHref(user: User): Promise<string> {
+  const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
+  if (user.email && adminEmails.includes(user.email)) return '/admin';
+  return '/dashboard';
 }
 
 export default function Navbar() {
@@ -45,7 +38,7 @@ export default function Navbar() {
     const syncUser = async (nextUser: User | null) => {
       setUser(nextUser);
       if (nextUser) {
-        setDashboardHref(await resolveDashboardHref(nextUser.id));
+        setDashboardHref(await resolveDashboardHref(nextUser));
       }
       setAuthReady(true);
     };

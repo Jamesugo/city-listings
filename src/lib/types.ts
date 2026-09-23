@@ -79,7 +79,6 @@ export interface User {
   id: string;
   email: string;
   phone?: string;
-  role: 'user' | 'owner' | 'admin';
   business_id?: string;
   created_at: string;
 }

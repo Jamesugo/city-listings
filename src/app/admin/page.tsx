@@ -11,14 +11,9 @@ export default async function AdminPage() {
     redirect('/admin/login');
   }
 
-  const { data: dbUser } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-    
-  if (!dbUser || dbUser.role !== 'admin') {
-    redirect('/dashboard'); // Owners go to dashboard, users go to / (handled by login redirects, but fallback here)
+  const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || [];
+  if (!user.email || !adminEmails.includes(user.email)) {
+    redirect('/dashboard'); 
   }
 
   const businesses = await getBusinessesAdmin();

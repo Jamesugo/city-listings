@@ -5,8 +5,19 @@ import { cookies } from 'next/headers'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // if "next" is in param, use it as the redirect URL, default to /dashboard
-  const next = searchParams.get('next') ?? '/dashboard'
+  const requestedNext = searchParams.get('next') ?? '/dashboard'
+  const next = requestedNext.startsWith('/') && !requestedNext.startsWith('//')
+    ? requestedNext
+    : '/dashboard'
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || origin).replace(/\/$/, '')
+
+  // Handle OAuth error params (e.g. from Supabase or Google)
+  const errorParam = searchParams.get('error')
+  const errorDescription = searchParams.get('error_description')
+  if (errorParam) {
+    const msg = errorDescription || errorParam || 'OAuth sign-in failed'
+    return NextResponse.redirect(`${siteUrl}/admin/login?error=${encodeURIComponent(msg)}`)
+  }
 
   if (code) {
     const cookieStore = await cookies()
@@ -23,7 +34,7 @@ export async function GET(request: Request) {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
               )
-            } catch (error) {
+            } catch {
               // The `setAll` method was called from a Server Component.
               // This can be ignored if you have middleware refreshing
               // user sessions.
@@ -35,23 +46,33 @@ export async function GET(request: Request) {
     
     const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error && sessionData.user) {
+      const user = sessionData.user
       // Ensure the user exists in the public.users table (for OAuth sign-ups)
-      await supabase.from('users').upsert(
+      const { error: profileError } = await supabase.from('users').upsert(
         {
-          id: sessionData.user.id,
-          email: sessionData.user.email,
-          role: 'owner', // Defaulting to owner for simplicity as requested
+          id: user.id,
+          email: user.email,
+          role: 'owner',
         },
         { onConflict: 'id', ignoreDuplicates: true }
       )
 
-      // Use NEXT_PUBLIC_SITE_URL to ensure redirect always goes to the correct app domain
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
+      if (profileError) {
+        console.error('Failed to provision OAuth user profile:', profileError)
+        return NextResponse.redirect(
+          `${siteUrl}/admin/login?error=${encodeURIComponent('Your account was authenticated, but your user profile could not be created.')}`
+        )
+      }
+
       return NextResponse.redirect(`${siteUrl}${next}`)
     }
+
+    // Code exchange failed
+    const msg = error?.message || 'Unable to sign in. Please try again.'
+    return NextResponse.redirect(`${siteUrl}/admin/login?error=${encodeURIComponent(msg)}`)
   }
 
-  // return the user to an error page with some instructions
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
+  // No code and no error — invalid request
   return NextResponse.redirect(`${siteUrl}/admin/login?error=Invalid%20or%20expired%20auth%20link`)
 }
+

@@ -471,7 +471,7 @@ export async function getRecentReviews(limit: number = 6): Promise<Review[]> {
     .from('reviews')
     .select(`
       *,
-      user:users(id, email, phone, role),
+      user:users(id, email, phone),
       business:businesses(id, name, slug, category_id, city_id, address, phone, verification_tier, is_featured, is_active, cover_image_url)
     `)
     .eq('is_flagged', false)
@@ -496,7 +496,6 @@ export async function getRecentReviews(limit: number = 6): Promise<Review[]> {
       id: r.user.id,
       email: r.user.email,
       phone: r.user.phone,
-      role: r.user.role,
       created_at: r.user.created_at || new Date().toISOString(),
     } : undefined,
     business: r.business ? {
