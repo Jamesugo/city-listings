@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from './supabase/server';
 import type { Category, State, City, Business, BusinessCard, Review } from './types';
+import { CATEGORIES } from './mock-data';
 
 // ============================================================
 // Helper functions — data access layer (Supabase Phase 2/3)
@@ -43,7 +44,7 @@ export function isOpenNow(hoursObj?: Record<string, string>): boolean {
     const currentMins = now.getHours() * 60 + now.getMinutes();
     
     return currentMins >= startMins && currentMins <= endMins;
-  } catch (e) {
+  } catch {
     return true; // Fallback
   }
 }
@@ -66,7 +67,7 @@ export async function getCategories(): Promise<Category[]> {
       return [];
     }
 
-    return fallbackData.map((cat) => ({
+    const categories = fallbackData.map((cat) => ({
       id: cat.id,
       name: cat.name,
       slug: cat.slug,
@@ -74,9 +75,11 @@ export async function getCategories(): Promise<Category[]> {
       description: cat.description,
       businessCount: 0,
     }));
+
+    return categories.length > 0 ? categories : CATEGORIES;
   }
 
-  return data.map((cat: any) => ({
+  const categories = data.map((cat: any) => ({
     id: cat.id,
     name: cat.name,
     slug: cat.slug,
@@ -84,6 +87,8 @@ export async function getCategories(): Promise<Category[]> {
     description: cat.description,
     businessCount: cat.businesses?.[0]?.count || 0,
   }));
+
+  return categories.length > 0 ? categories : CATEGORIES;
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
@@ -294,7 +299,9 @@ export async function getBusinesses(filters: {
     });
   }
 
-  let { data, error } = await query;
+  const result = await query;
+  let data = result.data;
+  const { error } = result;
   if (error || !data) return [];
   
   if (filters.openNow) {

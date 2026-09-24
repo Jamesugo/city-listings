@@ -34,33 +34,6 @@ export default async function HomePage() {
       </section>
 
       {/* ============================================================
-          STATS BAR
-      ============================================================ */}
-      <div className={styles.statsBar} aria-label="Directory statistics">
-        <div className={`container ${styles.statsInner}`}>
-          <div className={styles.stat}>
-            <span className={styles.statNumber}>250+</span>
-            <span className={styles.statLabel}>Businesses Listed</span>
-          </div>
-          <div className={styles.statDivider} aria-hidden="true" />
-          <div className={styles.stat}>
-            <span className={styles.statNumber}>5</span>
-            <span className={styles.statLabel}>Cities in Enugu</span>
-          </div>
-          <div className={styles.statDivider} aria-hidden="true" />
-          <div className={styles.stat}>
-            <span className={styles.statNumber}>12</span>
-            <span className={styles.statLabel}>Business Categories</span>
-          </div>
-          <div className={styles.statDivider} aria-hidden="true" />
-          <div className={styles.stat}>
-            <span className={styles.statNumber}>100%</span>
-            <span className={styles.statLabel}>WhatsApp-ready</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ============================================================
           CATEGORIES SECTION
       ============================================================ */}
       <section className={`section ${styles.categoriesSection}`} aria-labelledby="categories-heading">
