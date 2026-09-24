@@ -427,7 +427,10 @@ export async function getBusinessBySlug(slug: string): Promise<Business | undefi
 }
 
 export async function getFeaturedBusinesses(limit: number = 6): Promise<BusinessCard[]> {
-  return getBusinesses({ featured: true, limit });
+  const featured = await getBusinesses({ featured: true, limit });
+  if (featured.length >= 2) return featured;
+
+  return getBusinesses({ limit });
 }
 
 export async function getRelatedBusinesses(business: Business, limit: number = 3): Promise<BusinessCard[]> {

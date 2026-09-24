@@ -6,6 +6,7 @@ import HeroSlider from '@/components/HeroSlider';
 import StatesDropdown from '@/components/StatesDropdown';
 import RecentActivity from '@/components/RecentActivity';
 import { Star } from '@/components/Icons';
+import { CATEGORIES } from '@/lib/mock-data';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -18,6 +19,9 @@ export default async function HomePage() {
   const categories = await getCategories();
   const featured = await getFeaturedBusinesses(6);
   const recentReviews = await getRecentReviews(6);
+  const browseCategories = Array.from(
+    new Map([...categories, ...CATEGORIES].map((category) => [category.slug, category])).values()
+  ).slice(0, 6);
 
   return (
     <>
@@ -72,7 +76,7 @@ export default async function HomePage() {
           </div>
 
           <div className={styles.categoryGrid} role="list" aria-label="Business categories">
-            {categories.map((cat) => (
+            {browseCategories.map((cat) => (
               <Link
                 key={cat.slug}
                 href={`/categories/${cat.slug}`}
@@ -100,7 +104,7 @@ export default async function HomePage() {
               <h2 id="featured-heading" className="section-title">
                 <Star size={32} style={{ marginRight: '0.5rem', display: 'inline' }} /> Featured Businesses
               </h2>
-              <p className="section-subtitle">Top-rated and verified businesses in Enugu State</p>
+              <p className="section-subtitle">Top-rated and verified businesses across Nigeria</p>
             </div>
             <Link href="/businesses?featured=true" className="btn btn-ghost btn-sm" id="all-featured-link">
               View all →

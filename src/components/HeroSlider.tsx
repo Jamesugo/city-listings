@@ -123,7 +123,12 @@ export default function HeroSlider({ businesses }: HeroSliderProps) {
             key={biz.id}
             className={`${styles.imageWrapper} ${index === currentIndex ? styles.activeImage : ''}`}
           >
-            <div className={styles.imagePlaceholder} />
+            <div
+              className={styles.imagePlaceholder}
+              style={{
+                backgroundImage: `url(${biz.coverImageUrl || getCategoryImage(biz.categorySlug || '')})`,
+              }}
+            />
             <div className={styles.overlay} />
           </div>
         );
