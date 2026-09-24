@@ -4,6 +4,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FloatingNearMe from '@/components/FloatingNearMe';
+import { getCities } from '@/lib/data';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -44,11 +45,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cities = await getCities();
+
   return (
     <html lang="en" suppressHydrationWarning className={plusJakartaSans.className}>
       <head>
@@ -57,7 +60,7 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossOrigin="anonymous" referrerPolicy="no-referrer" />
       </head>
       <body>
-        <Navbar />
+        <Navbar cities={cities} />
         <main style={{ minHeight: 'calc(100vh - var(--navbar-height))' }}>
           {children}
         </main>

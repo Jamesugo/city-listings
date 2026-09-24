@@ -5,7 +5,9 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
-import { Building2, FolderOpen, Globe2, KeyRound, Plus, MapPin, User as UserIcon } from '@/components/Icons';
+import { Building2, FolderOpen, KeyRound, Plus, MapPin, User as UserIcon } from '@/components/Icons';
+import type { City } from '@/lib/types';
+import StatesDropdown from './StatesDropdown';
 import styles from './Navbar.module.css';
 
 async function resolveDashboardHref(user: User): Promise<string> {
@@ -14,7 +16,7 @@ async function resolveDashboardHref(user: User): Promise<string> {
   return '/dashboard';
 }
 
-export default function Navbar() {
+export default function Navbar({ cities }: { cities: City[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -106,9 +108,7 @@ export default function Navbar() {
           <Link href="/categories" className={styles.link} role="menuitem">
             Categories
           </Link>
-          <Link href="/cities" className={styles.link} role="menuitem">
-            Cities
-          </Link>
+          <StatesDropdown variant="page" cities={cities} />
           <Link href="/faq" className={styles.link} role="menuitem">
             FAQ
           </Link>
@@ -171,9 +171,9 @@ export default function Navbar() {
           <Link href="/categories" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
             <FolderOpen size={18} /> Categories
           </Link>
-          <Link href="/cities" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
-            <Globe2 size={18} /> Cities
-          </Link>
+          <div className={styles.mobileStatesDropdown}>
+            <StatesDropdown variant="page" cities={cities} />
+          </div>
           <Link href="/faq" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
             FAQ
           </Link>

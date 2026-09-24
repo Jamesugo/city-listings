@@ -206,6 +206,7 @@
 /* State link */
 .stateLink {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   padding: 6px 8px;
@@ -215,6 +216,10 @@
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
   cursor: pointer;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font: inherit;
 }
 .stateLink:hover {
   background: var(--color-primary-light);
@@ -232,6 +237,42 @@
 .stateLink:hover .stateArrow {
   opacity: 1;
   transform: translateX(2px);
+}
+
+.stateItem {
+  min-width: 0;
+}
+
+.stateArrowOpen {
+  opacity: 1;
+  transform: rotate(90deg);
+}
+
+.cityList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 var(--space-2) var(--space-3);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.cityLink,
+.noCities {
+  padding: 4px 8px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  text-decoration: none;
+}
+
+.cityLink:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-radius: var(--radius-sm);
+}
+
+.noCities {
+  font-style: italic;
 }
 
 /* ================================================================
