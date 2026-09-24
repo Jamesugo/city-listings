@@ -3,25 +3,16 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { NIGERIAN_STATES, groupStatesByLetter } from '@/lib/nigerianStates';
-import type { City } from '@/lib/types';
 import styles from './StatesDropdown.module.css';
 
 interface StatesDropdownProps {
   variant?: 'hero' | 'page';
-  cities?: City[];
 }
 
-export default function StatesDropdown({ variant = 'hero', cities = [] }: StatesDropdownProps) {
+export default function StatesDropdown({ variant = 'hero' }: StatesDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [expandedState, setExpandedState] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const grouped = groupStatesByLetter(NIGERIAN_STATES);
-  const citiesByState = new Map<string, City[]>();
-  for (const city of cities) {
-    const stateCities = citiesByState.get(city.stateName) ?? [];
-    stateCities.push(city);
-    citiesByState.set(city.stateName, stateCities);
-  }
 
   // Close on outside click
   useEffect(() => {
@@ -83,35 +74,17 @@ export default function StatesDropdown({ variant = 'hero', cities = [] }: States
                 <span className={styles.letterLabel}>{letter}</span>
                 <div className={styles.letterStates}>
                   {states.map((s) => (
-                    <div key={s.slug} className={styles.stateItem}>
-                      <button
-                        type="button"
-                        className={styles.stateLink}
-                        aria-expanded={expandedState === s.slug}
-                        onClick={() => setExpandedState((current) => current === s.slug ? null : s.slug)}
-                        id={`state-option-${s.slug}`}
-                      >
-                        <span>{s.name} State</span>
-                        <svg className={`${styles.stateArrow} ${expandedState === s.slug ? styles.stateArrowOpen : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-                      </button>
-                      {expandedState === s.slug && (
-                        <div className={styles.cityList}>
-                          {(citiesByState.get(s.name) ?? []).map((city) => (
-                            <Link
-                              key={city.id}
-                              href={`/cities/${city.slug}`}
-                              className={styles.cityLink}
-                              onClick={() => setOpen(false)}
-                            >
-                              {city.name}
-                            </Link>
-                          ))}
-                          {(citiesByState.get(s.name) ?? []).length === 0 && (
-                            <span className={styles.noCities}>No cities listed</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <Link
+                      key={s.slug}
+                      href={`/cities?state=${s.slug}`}
+                      className={styles.stateLink}
+                      role="option"
+                      id={`state-option-${s.slug}`}
+                      onClick={() => setOpen(false)}
+                    >
+                      {s.name} State
+                      <svg className={styles.stateArrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                    </Link>
                   ))}
                 </div>
               </div>

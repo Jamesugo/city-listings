@@ -11,18 +11,27 @@ export const metadata: Metadata = {
     'Browse local businesses by state and city across Nigeria. Find businesses in Lagos, Enugu, Abuja, Kano, Rivers and all 36 states.',
 };
 
-export default async function CitiesPage() {
+export default async function CitiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ state?: string }>;
+}) {
+  const { state: stateSlug } = await searchParams;
   const cities = await getCities();
+  const selectedState = NIGERIAN_STATES.find((state) => state.slug === stateSlug);
+  const visibleCities = selectedState
+    ? cities.filter((city) => city.stateName === selectedState.name)
+    : cities;
 
   // Group cities by state name for matching
   const citiesByState = new Map<string, typeof cities>();
-  for (const city of cities) {
+  for (const city of visibleCities) {
     const key = city.stateName || '';
     if (!citiesByState.has(key)) citiesByState.set(key, []);
     citiesByState.get(key)!.push(city);
   }
 
-  const grouped = groupStatesByLetter(NIGERIAN_STATES);
+  const grouped = groupStatesByLetter(selectedState ? [selectedState] : NIGERIAN_STATES);
 
   return (
     <div className={styles.page}>
@@ -31,9 +40,9 @@ export default async function CitiesPage() {
           <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
             <Link href="/">Home</Link>
             <span aria-hidden="true">›</span>
-            <span>States & Cities</span>
+            <span>{selectedState ? `${selectedState.name} State` : 'States & Cities'}</span>
           </nav>
-          <h1 className={styles.title}>Browse by State & City</h1>
+          <h1 className={styles.title}>{selectedState ? `${selectedState.name} State Cities` : 'Browse by State & City'}</h1>
           <p className={styles.subtitle}>
             Explore businesses across all 36 Nigerian states and FCT Abuja
           </p>

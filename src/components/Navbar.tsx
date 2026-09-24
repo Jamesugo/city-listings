@@ -6,7 +6,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { Building2, FolderOpen, KeyRound, Plus, MapPin, User as UserIcon } from '@/components/Icons';
-import type { City } from '@/lib/types';
 import StatesDropdown from './StatesDropdown';
 import styles from './Navbar.module.css';
 
@@ -16,7 +15,7 @@ async function resolveDashboardHref(user: User): Promise<string> {
   return '/dashboard';
 }
 
-export default function Navbar({ cities }: { cities: City[] }) {
+export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -108,7 +107,7 @@ export default function Navbar({ cities }: { cities: City[] }) {
           <Link href="/categories" className={styles.link} role="menuitem">
             Categories
           </Link>
-          <StatesDropdown variant="page" cities={cities} />
+          <StatesDropdown variant="page" />
           <Link href="/faq" className={styles.link} role="menuitem">
             FAQ
           </Link>
@@ -172,7 +171,7 @@ export default function Navbar({ cities }: { cities: City[] }) {
             <FolderOpen size={18} /> Categories
           </Link>
           <div className={styles.mobileStatesDropdown}>
-            <StatesDropdown variant="page" cities={cities} />
+            <StatesDropdown variant="page" />
           </div>
           <Link href="/faq" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
             FAQ
