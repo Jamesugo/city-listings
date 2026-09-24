@@ -2,25 +2,47 @@
 
 import { useState, useCallback, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Business, Category, City, State } from '@/lib/types';
-import { NIGERIAN_STATES } from '@/lib/nigerianStates';
+import type { Business, Category, City } from '@/lib/types';
 import { upsertBusiness } from '../admin/actions';
 import { uploadMedia, deleteMedia } from '../admin/upload';
 import { logout } from '../admin/login/actions';
 import styles from './dashboard.module.css';
 import { ImagePlus, Trash2, X, Loader2, Eye, Phone, User, LogOut, LayoutDashboard, Lightbulb, Save, CheckCircle, Landmark } from '@/components/Icons';
 
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+const DEFAULT_HOURS = {
+  Mon: '9am - 5pm',
+  Tue: '9am - 5pm',
+  Wed: '9am - 5pm',
+  Thu: '9am - 5pm',
+  Fri: '9am - 5pm',
+  Sat: '9am - 5pm',
+  Sun: 'Closed',
+};
+
+function normalizeHours(hours?: Record<string, string>) {
+  const weekdayHours = hours?.['Mon-Sat'] ?? hours?.Mon ?? DEFAULT_HOURS.Mon;
+  return {
+    ...DEFAULT_HOURS,
+    Mon: hours?.Mon ?? weekdayHours,
+    Tue: hours?.Tue ?? weekdayHours,
+    Wed: hours?.Wed ?? weekdayHours,
+    Thu: hours?.Thu ?? weekdayHours,
+    Fri: hours?.Fri ?? weekdayHours,
+    Sat: hours?.Sat ?? weekdayHours,
+    Sun: hours?.Sun ?? DEFAULT_HOURS.Sun,
+  };
+}
+
 export default function OwnerDashboard({
   initialBusinesses,
   categories,
   cities,
-  states,
   initialTier,
 }: {
   initialBusinesses: Business[];
   categories: Category[];
   cities: City[];
-  states: State[];
   initialTier?: string;
 }) {
   const [businesses] = useState<Business[]>(initialBusinesses);
@@ -28,13 +50,6 @@ export default function OwnerDashboard({
   const router = useRouter();
   
   const editingId = hasBusiness ? businesses[0].id : null;
-
-  // Derive initial state from the existing business's city
-  const initialStateName = hasBusiness
-    ? cities.find(c => c.id === businesses[0].cityId)?.stateName ?? NIGERIAN_STATES[0]?.name ?? ''
-    : NIGERIAN_STATES[0]?.name ?? '';
-  const [selectedStateName, setSelectedStateName] = useState(initialStateName);
-  const filteredCities = cities.filter(c => c.stateName === selectedStateName);
 
   const [activeTab, setActiveTab] = useState<'profile' | 'myprofile' | 'media' | 'stats' | 'billing'>('profile');
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -67,7 +82,7 @@ export default function OwnerDashboard({
     website: businesses[0].website ?? '',
     description: businesses[0].description,
     subscriptionTier: businesses[0].subscriptionTier || 'free',
-    hours: (businesses[0].hours as Record<string, string>) || { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' },
+    hours: normalizeHours(businesses[0].hours as Record<string, string> | undefined),
   } : {
     name: '',
     slug: '',
@@ -80,7 +95,7 @@ export default function OwnerDashboard({
     website: '',
     description: '',
     subscriptionTier: (initialTier as 'free' | 'pro' | 'premium') || 'free',
-    hours: { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' } as Record<string, string>,
+    hours: normalizeHours(),
   };
 
   const [formData, setFormData] = useState(defaultFormData);
@@ -244,46 +259,6 @@ export default function OwnerDashboard({
                         ))}
                       </select>
                     </div>
-                    <div className="form-group">
-                      <label htmlFor="biz-state" className="form-label">State *</label>
-                      <select
-                        id="biz-state"
-                        className="form-input form-select"
-                        value={selectedStateName}
-                        onChange={(e) => {
-                          const newStateName = e.target.value;
-                          setSelectedStateName(newStateName);
-                          // Reset city to first city in new state
-                          const firstCity = cities.find(c => c.stateName === newStateName);
-                          setFormData(prev => ({ ...prev, cityId: firstCity?.id ?? '' }));
-                        }}
-                        required
-                      >
-                        <option value="" disabled>Select a state...</option>
-                        {NIGERIAN_STATES.map((state) => (
-                          <option key={state.slug} value={state.name}>{state.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="biz-city" className="form-label">City *</label>
-                      <select
-                        id="biz-city"
-                        className="form-input form-select"
-                        value={formData.cityId}
-                        onChange={(e) => setFormData({ ...formData, cityId: e.target.value })}
-                        required
-                        disabled={!selectedStateName}
-                      >
-                        {filteredCities.length === 0 ? (
-                          <option value="">No cities for selected state</option>
-                        ) : (
-                          filteredCities.map((city) => (
-                            <option key={city.id} value={city.id}>{city.name}</option>
-                          ))
-                        )}
-                      </select>
-                    </div>
                     <div className={`form-group ${styles.fullWidth}`}>
                       <label htmlFor="biz-address" className="form-label">Address *</label>
                       <input
@@ -358,24 +333,39 @@ export default function OwnerDashboard({
                   {/* Business Hours */}
                   <div className={styles.sectionHeader} style={{ marginTop: 'var(--space-8)' }}>
                     <h2 className={styles.sectionTitle} style={{ fontSize: '1.25rem' }}>Business Hours</h2>
-                    <p className={styles.sectionSubtitle}>Set your availability for each day (e.g. &quot;9am - 5pm&quot; or &quot;Closed&quot;).</p>
+                    <p className={styles.sectionSubtitle}>Set your weekday and Sunday availability.</p>
                   </div>
                   
                   <div className={styles.formGrid}>
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                      <div className="form-group" key={day}>
-                        <label htmlFor={`hours-${day}`} className="form-label">{day}</label>
-                        <input
-                          id={`hours-${day}`}
-                          className="form-input"
-                          value={formData.hours[day as keyof typeof formData.hours]}
-                          onChange={(e) => setFormData({ 
-                            ...formData, 
-                            hours: { ...formData.hours, [day]: e.target.value } 
-                          })}
-                        />
-                      </div>
-                    ))}
+                    <div className="form-group">
+                      <label htmlFor="hours-weekdays" className="form-label">Mon-Sat</label>
+                      <input
+                        id="hours-weekdays"
+                        className="form-input"
+                        value={formData.hours.Mon}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          hours: {
+                            ...formData.hours,
+                            ...Object.fromEntries(WEEKDAYS.map((day) => [day, e.target.value])),
+                          },
+                        })}
+                        placeholder="9am - 5pm or Closed"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="hours-sunday" className="form-label">Sun</label>
+                      <input
+                        id="hours-sunday"
+                        className="form-input"
+                        value={formData.hours.Sun}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          hours: { ...formData.hours, Sun: e.target.value },
+                        })}
+                        placeholder="9am - 5pm or Closed"
+                      />
+                    </div>
                   </div>
                   
                   <div style={{ marginTop: 'var(--space-8)', display: 'flex', justifyContent: 'flex-end' }}>
@@ -570,7 +560,11 @@ export default function OwnerDashboard({
               const convRate = views > 0 ? ((waClicks / views) * 100).toFixed(1) : '0.0';
               const fields = [biz.name, biz.description, biz.phone, biz.whatsapp, biz.email, biz.website, biz.coverImageUrl, biz.address];
               const profileScore = Math.round((fields.filter(Boolean).length / fields.length) * 100);
-              const DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+              const profileHours = biz.hours as Record<string, string>;
+              const schedule = [
+                ['Mon-Sat', profileHours?.['Mon-Sat'] ?? profileHours?.Mon],
+                ['Sun', profileHours?.Sun],
+              ];
 
               return (
                 <>
@@ -672,8 +666,7 @@ export default function OwnerDashboard({
                         <div style={{ borderTop: '1px solid var(--color-border-light)', paddingTop: '1.25rem' }}>
                           <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.75rem' }}>Business Hours</h3>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem 1.5rem' }}>
-                            {DAY_ORDER.map(day => {
-                              const h = (biz.hours as Record<string, string>)?.[day];
+                            {schedule.map(([day, h]) => {
                               return (
                                 <div key={day} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--color-text-secondary)' }}>
                                   <span style={{ fontWeight: 600 }}>{day}</span>

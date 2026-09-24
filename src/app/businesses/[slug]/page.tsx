@@ -107,12 +107,6 @@ function LocalBusinessJsonLd({ biz }: { biz: Business }) {
   );
 }
 
-const DAY_ORDER: (keyof BusinessHours)[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DAY_NAMES: Record<string, string> = {
-  Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday',
-  Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday',
-};
-
 function formatDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString('en-NG', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -253,11 +247,13 @@ export default async function BusinessDetailPage({
             <section className={styles.section} aria-labelledby="hours-heading">
               <h2 id="hours-heading" className={styles.sectionTitle}>Business Hours</h2>
               <dl className={styles.hoursGrid}>
-                {DAY_ORDER.map((day) => {
-                  const h = (biz.hours as BusinessHours)[day];
+                {[
+                  ['Mon-Sat', (biz.hours as Record<string, string>)['Mon-Sat'] ?? (biz.hours as BusinessHours).Mon],
+                  ['Sun', (biz.hours as BusinessHours).Sun],
+                ].map(([day, h]) => {
                   return (
                     <div key={day} className={styles.hoursRow}>
-                      <dt className={styles.hoursDay}>{DAY_NAMES[day]}</dt>
+                      <dt className={styles.hoursDay}>{day}</dt>
                       <dd className={`${styles.hoursTime} ${h === 'Closed' ? styles.hoursClosed : ''}`}>
                         {h ?? 'Not specified'}
                       </dd>

@@ -93,7 +93,23 @@ export default function HeroSlider({ businesses }: HeroSliderProps) {
   }, [businesses.length]);
 
   if (!businesses || businesses.length === 0) {
-    return null;
+    return (
+      <div className={styles.sliderContainer}>
+        <div className={`${styles.imageWrapper} ${styles.activeImage}`}>
+          <div className={styles.imagePlaceholder} />
+          <div className={styles.overlay} />
+        </div>
+        <div className={styles.contentWrapper}>
+          <h1 className={styles.heroTitle}>Find trusted local businesses</h1>
+          <Link href="/businesses" className={styles.actionBtn}>
+            <svg className={styles.btnIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            Explore businesses
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const currentBusiness = businesses[currentIndex];

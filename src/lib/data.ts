@@ -56,8 +56,24 @@ export async function getCategories(): Promise<Category[]> {
     .order('name');
 
   if (error) {
-    console.error('Error fetching categories:', error);
-    return [];
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('categories')
+      .select('id, name, slug, icon, description')
+      .order('name');
+
+    if (fallbackError) {
+      console.error('Error fetching categories:', fallbackError);
+      return [];
+    }
+
+    return fallbackData.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      icon: cat.icon,
+      description: cat.description,
+      businessCount: 0,
+    }));
   }
 
   return data.map((cat: any) => ({
