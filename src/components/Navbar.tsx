@@ -6,7 +6,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { Building2, FolderOpen, KeyRound, Plus, MapPin, User as UserIcon } from '@/components/Icons';
-import StatesDropdown from './StatesDropdown';
 import styles from './Navbar.module.css';
 
 async function resolveDashboardHref(user: User): Promise<string> {
@@ -107,7 +106,9 @@ export default function Navbar() {
           <Link href="/categories" className={styles.link} role="menuitem">
             Categories
           </Link>
-          <StatesDropdown variant="page" />
+          <Link href="/states" className={styles.link} role="menuitem">
+            States
+          </Link>
           <Link href="/faq" className={styles.link} role="menuitem">
             FAQ
           </Link>
@@ -170,9 +171,9 @@ export default function Navbar() {
           <Link href="/categories" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
             <FolderOpen size={18} /> Categories
           </Link>
-          <div className={styles.mobileStatesDropdown}>
-            <StatesDropdown variant="page" />
-          </div>
+          <Link href="/states" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
+            <MapPin size={18} /> States
+          </Link>
           <Link href="/faq" className={styles.mobileLink} onClick={closeMenu} role="menuitem">
             FAQ
           </Link>

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from './supabase/server';
 import type { Category, State, City, Business, BusinessCard, Review } from './types';
-import { CATEGORIES, CITIES } from './mock-data';
+import { BUSINESSES, CATEGORIES, CITIES } from './mock-data';
 
 // ============================================================
 // Helper functions — data access layer (Supabase Phase 2/3)
@@ -132,7 +132,12 @@ export async function getCities(): Promise<City[]> {
     .select('*, states(name), businesses(count)')
     .order('name');
 
-  if (error) return CITIES;
+  if (error) {
+    return CITIES.map((city) => ({
+      ...city,
+      businessCount: BUSINESSES.filter((business) => business.cityId === city.id).length,
+    }));
+  }
 
   const cities = data.map((city: any) => ({
     id: city.id,
