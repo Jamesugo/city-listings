@@ -116,11 +116,13 @@ export async function resolveReferenceId(
   if (isUuid(value)) return value;
 
   const lookupValue = mapLegacyReferenceId(value, referenceList) ?? value;
+  const normalizedValue = lookupValue.trim();
   const supabase = await createClient();
+
   const { data, error } = await supabase
     .from(table)
-    .select('id')
-    .eq('slug', lookupValue)
+    .select('id, slug, name')
+    .or(`slug.eq.${normalizedValue},name.eq.${normalizedValue}`)
     .maybeSingle();
 
   if (error) {

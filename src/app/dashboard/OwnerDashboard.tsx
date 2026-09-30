@@ -8,6 +8,7 @@ import { upsertBusiness } from '../admin/actions';
 import { uploadMedia, deleteMedia } from '../admin/upload';
 import { logout } from '../admin/login/actions';
 import styles from './dashboard.module.css';
+import { NIGERIAN_STATES } from '@/lib/nigerianStates';
 import { ImagePlus, Trash2, X, Loader2, Eye, User, LogOut, LayoutDashboard, Lightbulb, Save, CheckCircle, Landmark } from '@/components/Icons';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
@@ -68,8 +69,10 @@ export default function OwnerDashboard({
       const city = cities.find((entry) => entry.id === cityId);
       if (city?.stateId) return city.stateId;
     }
-    return fallbackStateId || states[0]?.id || '';
-  }, [cities, states]);
+    if (fallbackStateId) return fallbackStateId;
+    const defaultState = NIGERIAN_STATES[0];
+    return defaultState?.slug || '';
+  }, [cities]);
 
   const [coverPreview, setCoverPreview] = useState<string | null>(
     hasBusiness ? businesses[0].coverImageUrl || null : null
@@ -86,7 +89,10 @@ export default function OwnerDashboard({
     slug: businesses[0].slug,
     categoryId: businesses[0].categoryId,
     stateId: getStateIdForCity(businesses[0].cityId, businesses[0].stateId),
-    cityId: businesses[0].cityId,
+    cityId: (() => {
+      const city = cities.find((entry) => entry.id === businesses[0].cityId);
+      return city?.name || NIGERIAN_STATES[0]?.cities[0] || '';
+    })(),
     address: businesses[0].address,
     phone: businesses[0].phone,
     whatsapp: businesses[0].whatsapp ?? '',
@@ -99,8 +105,8 @@ export default function OwnerDashboard({
     name: '',
     slug: '',
     categoryId: categories[0]?.id ?? '',
-    stateId: states[0]?.id ?? '',
-    cityId: cities.find((city) => city.stateId === states[0]?.id)?.id ?? cities[0]?.id ?? '',
+    stateId: NIGERIAN_STATES[0]?.slug ?? '',
+    cityId: NIGERIAN_STATES[0]?.cities[0] ?? '',
     address: '',
     phone: '',
     whatsapp: '',
@@ -111,8 +117,10 @@ export default function OwnerDashboard({
     hours: normalizeHours(),
   };
 
+  const stateOptions = NIGERIAN_STATES.length > 0 ? NIGERIAN_STATES : states.map((state) => ({ name: state.name, slug: state.slug, cities: [] }));
   const [formData, setFormData] = useState(defaultFormData);
-  const availableCities = cities.filter((city) => city.stateId === formData.stateId);
+  const selectedState = stateOptions.find((state) => state.slug === formData.stateId) ?? stateOptions[0];
+  const availableCities = selectedState?.cities ?? [];
   
   const slugify = (text: string): string =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -280,18 +288,18 @@ export default function OwnerDashboard({
                         className="form-input form-select"
                         value={formData.stateId}
                         onChange={(e) => {
-                          const nextStateId = e.target.value;
-                          const firstCity = cities.find((city) => city.stateId === nextStateId);
+                          const nextStateSlug = e.target.value;
+                          const nextState = stateOptions.find((state) => state.slug === nextStateSlug) ?? stateOptions[0];
                           setFormData({
                             ...formData,
-                            stateId: nextStateId,
-                            cityId: firstCity?.id ?? '',
+                            stateId: nextStateSlug,
+                            cityId: nextState?.cities[0] ?? '',
                           });
                         }}
                         required
                       >
-                        {states.map((state) => (
-                          <option key={state.id} value={state.id}>{state.name}</option>
+                        {stateOptions.map((state) => (
+                          <option key={state.slug} value={state.slug}>{state.name}</option>
                         ))}
                       </select>
                     </div>
@@ -307,7 +315,7 @@ export default function OwnerDashboard({
                       >
                         {availableCities.length > 0 ? (
                           availableCities.map((city) => (
-                            <option key={city.id} value={city.id}>{city.name}</option>
+                            <option key={city} value={city}>{city}</option>
                           ))
                         ) : (
                           <option value="">Select a state first</option>

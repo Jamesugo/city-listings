@@ -8,6 +8,7 @@ import { upsertBusiness, deleteBusiness, toggleFeatured } from './actions';
 import { uploadMedia, deleteMedia } from './upload';
 import { logout } from './login/actions';
 import styles from './page.module.css';
+import { NIGERIAN_STATES } from '@/lib/nigerianStates';
 import { Plus, ImagePlus, Trash2, X, Star, CheckCircle, Phone, Landmark, Eye, Edit2 } from '@/components/Icons';
 
 export default function AdminDashboard({
@@ -48,16 +49,16 @@ export default function AdminDashboard({
       const city = cities.find((entry) => entry.id === cityId);
       if (city?.stateId) return city.stateId;
     }
-    return states[0]?.id || '';
-  }, [cities, states]);
+    return NIGERIAN_STATES[0]?.slug || '';
+  }, [cities]);
 
   // Form state
   const defaultFormData = {
     name: '',
     slug: '',
     categoryId: categories[0]?.id ?? '',
-    stateId: states[0]?.id ?? '',
-    cityId: cities.find((city) => city.stateId === states[0]?.id)?.id ?? cities[0]?.id ?? '',
+    stateId: NIGERIAN_STATES[0]?.slug ?? '',
+    cityId: NIGERIAN_STATES[0]?.cities[0] ?? '',
     address: '',
     phone: '',
     whatsapp: '',
@@ -70,8 +71,10 @@ export default function AdminDashboard({
     hours: { Mon: '9am - 5pm', Tue: '9am - 5pm', Wed: '9am - 5pm', Thu: '9am - 5pm', Fri: '9am - 5pm', Sat: 'Closed', Sun: 'Closed' } as Record<string, string>,
   };
 
+  const stateOptions = NIGERIAN_STATES.length > 0 ? NIGERIAN_STATES : states.map((state) => ({ name: state.name, slug: state.slug, cities: [] }));
   const [formData, setFormData] = useState(defaultFormData);
-  const availableCities = cities.filter((city) => city.stateId === formData.stateId);
+  const selectedState = stateOptions.find((state) => state.slug === formData.stateId) ?? stateOptions[0];
+  const availableCities = selectedState?.cities ?? [];
 
   const slugify = (text: string): string =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -81,8 +84,8 @@ export default function AdminDashboard({
       name: '',
       slug: '',
       categoryId: categories[0]?.id ?? '',
-      stateId: states[0]?.id ?? '',
-      cityId: cities.find((city) => city.stateId === states[0]?.id)?.id ?? cities[0]?.id ?? '',
+      stateId: NIGERIAN_STATES[0]?.slug ?? '',
+      cityId: NIGERIAN_STATES[0]?.cities[0] ?? '',
       address: '',
       phone: '',
       whatsapp: '',
@@ -96,7 +99,7 @@ export default function AdminDashboard({
     });
     setEditingId(null);
     setShowForm(false);
-  }, [categories, cities, states]);
+  }, [categories]);
 
   const handleEdit = useCallback((biz: Business) => {
     setFormData({
@@ -296,18 +299,18 @@ export default function AdminDashboard({
                     className="form-input form-select"
                     value={formData.stateId}
                     onChange={(e) => {
-                      const nextStateId = e.target.value;
-                      const firstCity = cities.find((city) => city.stateId === nextStateId);
+                      const nextStateSlug = e.target.value;
+                      const nextState = stateOptions.find((state) => state.slug === nextStateSlug) ?? stateOptions[0];
                       setFormData({
                         ...formData,
-                        stateId: nextStateId,
-                        cityId: firstCity?.id ?? '',
+                        stateId: nextStateSlug,
+                        cityId: nextState?.cities[0] ?? '',
                       });
                     }}
                     required
                   >
-                    {states.map((state) => (
-                      <option key={state.id} value={state.id}>{state.name}</option>
+                    {stateOptions.map((state) => (
+                      <option key={state.slug} value={state.slug}>{state.name}</option>
                     ))}
                   </select>
                 </div>
@@ -323,7 +326,7 @@ export default function AdminDashboard({
                   >
                     {availableCities.length > 0 ? (
                       availableCities.map((city) => (
-                        <option key={city.id} value={city.id}>{city.name}</option>
+                        <option key={city} value={city}>{city}</option>
                       ))
                     ) : (
                       <option value="">Select a state first</option>
