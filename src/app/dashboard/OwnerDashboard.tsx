@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useCallback, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Business, Category, City } from '@/lib/types';
@@ -7,7 +8,7 @@ import { upsertBusiness } from '../admin/actions';
 import { uploadMedia, deleteMedia } from '../admin/upload';
 import { logout } from '../admin/login/actions';
 import styles from './dashboard.module.css';
-import { ImagePlus, Trash2, X, Loader2, Eye, Phone, User, LogOut, LayoutDashboard, Lightbulb, Save, CheckCircle, Landmark } from '@/components/Icons';
+import { ImagePlus, Trash2, X, Loader2, Eye, User, LogOut, LayoutDashboard, Lightbulb, Save, CheckCircle, Landmark } from '@/components/Icons';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 const DEFAULT_HOURS = {
@@ -399,7 +400,7 @@ export default function OwnerDashboard({
                       
                       {coverPreview ? (
                         <div className={styles.mediaPreview} style={{ maxWidth: '300px' }}>
-                          <img src={coverPreview} alt="Cover" />
+                          <Image src={coverPreview} alt="Cover" width={1200} height={800} />
                           <button
                             type="button"
                             className={styles.deleteOverlay}
@@ -478,7 +479,7 @@ export default function OwnerDashboard({
                             {url.match(/\.(mp4|webm|mov)$/i) ? (
                               <video src={url} controls />
                             ) : (
-                              <img src={url} alt={`Gallery ${i + 1}`} />
+                              <Image src={url} alt={`Gallery ${i + 1}`} width={1200} height={800} />
                             )}
                             <button
                               type="button"
@@ -607,8 +608,7 @@ export default function OwnerDashboard({
                     {/* Cover image */}
                     <div style={{ position: 'relative', height: '200px', background: biz.coverImageUrl ? 'transparent' : 'linear-gradient(135deg, var(--color-primary-light), var(--color-primary))' }}>
                       {biz.coverImageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={biz.coverImageUrl} alt={biz.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <Image src={biz.coverImageUrl} alt={biz.name} width={1200} height={800} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-primary-dark)', gap: '0.5rem' }}>
                           <ImagePlus size={40} style={{ opacity: 0.6 }} />
@@ -690,8 +690,7 @@ export default function OwnerDashboard({
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 'var(--space-3)' }}>
                         {biz.gallery.map((url, i) => (
                           <div key={i} style={{ aspectRatio: '1', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border-light)' }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={url} alt={`Media ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <Image src={url} alt={`Media ${i + 1}`} width={1200} height={800} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
                         ))}
                       </div>
@@ -848,7 +847,6 @@ export default function OwnerDashboard({
             })()}
 
             {activeTab === 'billing' && hasBusiness && (() => {
-              const biz = businesses[0];
               const tier = formData.subscriptionTier || 'free';
               
               const tiers = [

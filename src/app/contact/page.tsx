@@ -3,7 +3,7 @@ import styles from './page.module.css';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
-  description: 'Get in touch with the NaijaList team. We are here to help.',
+  description: 'Get in touch with the NaijaList team. We&apos;re here to help.',
 };
 
 export default function ContactPage() {
@@ -12,7 +12,7 @@ export default function ContactPage() {
       <section className={styles.hero} aria-labelledby="contact-heading">
         <div className="container">
           <h1 id="contact-heading" className={styles.title}>Contact Us</h1>
-          <p className={styles.subtitle}>We'd love to hear from you. Reach out to our team.</p>
+          <p className={styles.subtitle}>We&apos;d love to hear from you. Reach out to our team.</p>
         </div>
       </section>
 

@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { getCategories, getFeaturedBusinesses, getRecentReviews } from '@/lib/data';
 import BusinessCardComponent from '@/components/BusinessCardComponent';
 import HeroSlider from '@/components/HeroSlider';
-import StatesDropdown from '@/components/StatesDropdown';
 import RecentActivity from '@/components/RecentActivity';
 import { Star } from '@/components/Icons';
 import { CATEGORIES } from '@/lib/mock-data';

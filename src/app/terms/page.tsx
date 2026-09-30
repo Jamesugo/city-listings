@@ -51,7 +51,7 @@ export default function TermsOfServicePage() {
             <li>In any way that violates any applicable national or international law or regulation.</li>
             <li>To post fraudulent, misleading, or unauthorized business listings.</li>
             <li>To impersonate or attempt to impersonate NaijaList, a NaijaList employee, another user, or any other person or entity.</li>
-            <li>To engage in any other conduct that restricts or inhibits anyone's use or enjoyment of the Service.</li>
+            <li>To engage in any other conduct that restricts or inhibits anyone&apos;s use or enjoyment of the Service.</li>
           </ul>
 
           <h2>6. Termination</h2>

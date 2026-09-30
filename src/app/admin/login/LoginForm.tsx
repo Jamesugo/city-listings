@@ -42,13 +42,6 @@ export default function LoginForm({ error, message, tier }: { error?: string; me
   const isSignup = mode === 'signup';
   const isForgot = mode === 'forgot';
 
-  const toggleMode = () => {
-    setMode(isLogin ? 'signup' : 'login');
-    if (error || message) {
-      router.replace(pathname); // Clears the query params
-    }
-  };
-
   return (
     <div className={styles.loginWrapper}>
       <form className={styles.loginCard}>

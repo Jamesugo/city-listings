@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useCallback, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Business, Category, City } from '@/lib/types';
@@ -7,7 +8,7 @@ import { upsertBusiness, deleteBusiness, toggleFeatured } from './actions';
 import { uploadMedia, deleteMedia } from './upload';
 import { logout } from './login/actions';
 import styles from './page.module.css';
-import { Plus, Edit, ImagePlus, Trash2, X, Loader2, Star, CheckCircle, Phone, Landmark, Eye, Edit2, Lightbulb, Save } from '@/components/Icons';
+import { Plus, ImagePlus, Trash2, X, Star, CheckCircle, Phone, Landmark, Eye, Edit2 } from '@/components/Icons';
 
 export default function AdminDashboard({
   initialBusinesses,
@@ -82,7 +83,7 @@ export default function AdminDashboard({
     });
     setEditingId(null);
     setShowForm(false);
-  }, []);
+  }, [categories, cities]);
 
   const handleEdit = useCallback((biz: Business) => {
     setFormData({
@@ -392,7 +393,7 @@ export default function AdminDashboard({
                       <label className="form-label">Cover Image</label>
                       {coverPreview ? (
                         <div className={styles.coverPreview}>
-                          <img src={coverPreview} alt="Cover" className={styles.coverImg} />
+                          <Image src={coverPreview} alt="Cover" className={styles.coverImg} width={1200} height={800} />
                           <button
                             type="button"
                             className={styles.deleteOverlay}
@@ -466,7 +467,7 @@ export default function AdminDashboard({
                             {url.match(/\.(mp4|webm|mov)$/i) ? (
                               <video src={url} className={styles.galleryThumb} controls />
                             ) : (
-                              <img src={url} alt={`Gallery ${i + 1}`} className={styles.galleryThumb} />
+                              <Image src={url} alt={`Gallery ${i + 1}`} className={styles.galleryThumb} width={1200} height={800} />
                             )}
                             <button
                               type="button"

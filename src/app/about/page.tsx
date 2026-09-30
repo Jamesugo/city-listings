@@ -4,7 +4,7 @@ import styles from './page.module.css';
 
 export const metadata: Metadata = {
   title: 'About Us',
-  description: 'Learn about NaijaList, Nigeria\'s premier local business directory.',
+  description: 'Learn about NaijaList, Nigeria&apos;s premier local business directory.',
 };
 
 export default function AboutPage() {
@@ -27,7 +27,7 @@ export default function AboutPage() {
             
             <h2>Why Choose Us?</h2>
             <p>
-              We know how frustrating it can be to search for a reliable mechanic, a trusted clinic, or a great local restaurant, only to find outdated information. That's why we emphasize verified listings. With direct WhatsApp integration, you can contact businesses with just one tap.
+              We know how frustrating it can be to search for a reliable mechanic, a trusted clinic, or a great local restaurant, only to find outdated information. That&apos;s why we emphasize verified listings. With direct WhatsApp integration, you can contact businesses with just one tap.
             </p>
 
             <h2>For Business Owners</h2>

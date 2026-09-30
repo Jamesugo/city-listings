@@ -8,7 +8,7 @@ type IconProps = React.HTMLAttributes<HTMLElement> & {
 };
 
 const createFontIcon = (iconClass: string) => {
-  return function FontIcon({ size = 24, strokeWidth: _sw, fill, stroke, className = '', style, ...rest }: IconProps) {
+  return function FontIcon({ size = 24, fill, stroke, className = '', style, ...rest }: IconProps) {
     return (
       <i
         className={`${iconClass} ${className}`}
