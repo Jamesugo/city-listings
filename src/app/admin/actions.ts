@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { CATEGORIES, CITIES } from '@/lib/mock-data';
+import { resolveReferenceId } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
 
 export async function upsertBusiness(formData: Record<string, unknown>) {
@@ -30,10 +32,31 @@ export async function upsertBusiness(formData: Record<string, unknown>) {
     delete formData.verification_tier;
   }
   
+  const resolvedCategoryId = await resolveReferenceId(
+    typeof formData.category_id === 'string' ? formData.category_id : undefined,
+    'categories',
+    CATEGORIES
+  );
+  const resolvedCityId = await resolveReferenceId(
+    typeof formData.city_id === 'string' ? formData.city_id : undefined,
+    'cities',
+    CITIES
+  );
+
+  if (!resolvedCategoryId || !resolvedCityId) {
+    return { error: 'Please select a valid category and city before saving.' };
+  }
+
+  const cleanedFormData = {
+    ...formData,
+    category_id: resolvedCategoryId,
+    city_id: resolvedCityId,
+  };
+
   // Upsert business and return the inserted data to get the ID
   const { data: bizData, error } = await supabase
     .from('businesses')
-    .upsert(formData, { onConflict: 'slug' })
+    .upsert(cleanedFormData, { onConflict: 'slug' })
     .select('id')
     .single();
   

@@ -1,7 +1,135 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from './supabase/server';
 import type { Category, State, City, Business, BusinessCard, Review } from './types';
-import { BUSINESSES, CATEGORIES, CITIES } from './mock-data';
+import { BUSINESSES, CATEGORIES, CITIES, STATES } from './mock-data';
+
+export function isUuid(value?: string | null): boolean {
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+export function mapLegacyReferenceId<T extends { id: string; slug: string }>(value: string | undefined | null, referenceList: T[] = []): string | undefined {
+  if (!value) return undefined;
+  if (isUuid(value)) return value;
+
+  const directMatch = referenceList.find((item) => item.slug === value || item.id === value);
+  if (directMatch) return directMatch.slug;
+
+  return value;
+}
+
+export async function ensureReferenceData() {
+  const supabase = await createClient();
+
+  const { data: existingCategories, error: categoryCheckError } = await supabase
+    .from('categories')
+    .select('id, slug')
+    .limit(1);
+
+  if (categoryCheckError) {
+    console.error('Failed to check categories:', categoryCheckError);
+    return;
+  }
+
+  if (!existingCategories || existingCategories.length === 0) {
+    const categoriesToInsert = CATEGORIES.map((category) => ({
+      name: category.name,
+      slug: category.slug,
+      icon: category.icon,
+      description: category.description,
+    }));
+
+    const { error: categoryInsertError } = await supabase
+      .from('categories')
+      .upsert(categoriesToInsert, { onConflict: 'slug' });
+
+    if (categoryInsertError) {
+      console.error('Failed to seed categories:', categoryInsertError);
+    }
+  }
+
+  const { data: existingCities, error: cityCheckError } = await supabase
+    .from('cities')
+    .select('id, slug')
+    .limit(1);
+
+  if (cityCheckError) {
+    console.error('Failed to check cities:', cityCheckError);
+    return;
+  }
+
+  if (!existingCities || existingCities.length === 0) {
+    const { data: enuguState, error: stateLookupError } = await supabase
+      .from('states')
+      .select('id')
+      .eq('slug', 'enugu')
+      .maybeSingle();
+
+    if (stateLookupError) {
+      console.error('Failed to look up Enugu state:', stateLookupError);
+      return;
+    }
+
+    if (!enuguState) {
+      const { error: stateInsertError } = await supabase
+        .from('states')
+        .upsert(STATES.map((state) => ({ name: state.name, slug: state.slug })), { onConflict: 'slug' });
+
+      if (stateInsertError) {
+        console.error('Failed to seed states:', stateInsertError);
+        return;
+      }
+    }
+
+    const { data: stateRecord, error: resolvedStateError } = await supabase
+      .from('states')
+      .select('id')
+      .eq('slug', 'enugu')
+      .single();
+
+    if (resolvedStateError || !stateRecord) {
+      console.error('Failed to resolve Enugu state id:', resolvedStateError);
+      return;
+    }
+
+    const citiesToInsert = CITIES.map((city) => ({
+      name: city.name,
+      slug: city.slug,
+      state_id: stateRecord.id,
+    }));
+
+    const { error: cityInsertError } = await supabase
+      .from('cities')
+      .upsert(citiesToInsert, { onConflict: 'slug' });
+
+    if (cityInsertError) {
+      console.error('Failed to seed cities:', cityInsertError);
+    }
+  }
+}
+
+export async function resolveReferenceId(
+  value: string | undefined | null,
+  table: 'categories' | 'cities' | 'states',
+  referenceList: Array<{ id: string; slug: string }> = []
+): Promise<string | undefined> {
+  if (!value) return undefined;
+  if (isUuid(value)) return value;
+
+  const lookupValue = mapLegacyReferenceId(value, referenceList) ?? value;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from(table)
+    .select('id')
+    .eq('slug', lookupValue)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Failed to resolve ${table} for value ${value}:`, error);
+    return undefined;
+  }
+
+  return data?.id ?? undefined;
+}
 
 // ============================================================
 // Helper functions — data access layer (Supabase Phase 2/3)
@@ -50,6 +178,8 @@ export function isOpenNow(hoursObj?: Record<string, string>): boolean {
 }
 
 export async function getCategories(): Promise<Category[]> {
+  await ensureReferenceData();
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('categories')
@@ -126,6 +256,8 @@ export async function getStates(): Promise<State[]> {
 }
 
 export async function getCities(): Promise<City[]> {
+  await ensureReferenceData();
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('cities')
