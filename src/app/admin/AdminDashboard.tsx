@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState, useCallback, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Business, Category, City } from '@/lib/types';
+import type { Business, Category, City, State } from '@/lib/types';
 import { upsertBusiness, deleteBusiness, toggleFeatured } from './actions';
 import { uploadMedia, deleteMedia } from './upload';
 import { logout } from './login/actions';
@@ -14,10 +14,12 @@ export default function AdminDashboard({
   initialBusinesses,
   categories,
   cities,
+  states,
 }: {
   initialBusinesses: Business[];
   categories: Category[];
   cities: City[];
+  states: State[];
 }) {
   // Business list state
   const [businesses] = useState<Business[]>(initialBusinesses);
@@ -41,12 +43,21 @@ export default function AdminDashboard({
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
+  const getStateIdForCity = useCallback((cityId?: string) => {
+    if (cityId) {
+      const city = cities.find((entry) => entry.id === cityId);
+      if (city?.stateId) return city.stateId;
+    }
+    return states[0]?.id || '';
+  }, [cities, states]);
+
   // Form state
   const defaultFormData = {
     name: '',
     slug: '',
     categoryId: categories[0]?.id ?? '',
-    cityId: cities[0]?.id ?? '',
+    stateId: states[0]?.id ?? '',
+    cityId: cities.find((city) => city.stateId === states[0]?.id)?.id ?? cities[0]?.id ?? '',
     address: '',
     phone: '',
     whatsapp: '',
@@ -60,6 +71,7 @@ export default function AdminDashboard({
   };
 
   const [formData, setFormData] = useState(defaultFormData);
+  const availableCities = cities.filter((city) => city.stateId === formData.stateId);
 
   const slugify = (text: string): string =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -69,7 +81,8 @@ export default function AdminDashboard({
       name: '',
       slug: '',
       categoryId: categories[0]?.id ?? '',
-      cityId: cities[0]?.id ?? '',
+      stateId: states[0]?.id ?? '',
+      cityId: cities.find((city) => city.stateId === states[0]?.id)?.id ?? cities[0]?.id ?? '',
       address: '',
       phone: '',
       whatsapp: '',
@@ -83,13 +96,14 @@ export default function AdminDashboard({
     });
     setEditingId(null);
     setShowForm(false);
-  }, [categories, cities]);
+  }, [categories, cities, states]);
 
   const handleEdit = useCallback((biz: Business) => {
     setFormData({
       name: biz.name,
       slug: biz.slug,
       categoryId: biz.categoryId,
+      stateId: getStateIdForCity(biz.cityId),
       cityId: biz.cityId,
       address: biz.address,
       phone: biz.phone,
@@ -104,7 +118,7 @@ export default function AdminDashboard({
     });
     setEditingId(biz.id);
     setShowForm(true);
-  }, []);
+  }, [getStateIdForCity]);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -276,6 +290,28 @@ export default function AdminDashboard({
                   </select>
                 </div>
                 <div className="form-group">
+                  <label htmlFor="biz-state" className="form-label">State *</label>
+                  <select
+                    id="biz-state"
+                    className="form-input form-select"
+                    value={formData.stateId}
+                    onChange={(e) => {
+                      const nextStateId = e.target.value;
+                      const firstCity = cities.find((city) => city.stateId === nextStateId);
+                      setFormData({
+                        ...formData,
+                        stateId: nextStateId,
+                        cityId: firstCity?.id ?? '',
+                      });
+                    }}
+                    required
+                  >
+                    {states.map((state) => (
+                      <option key={state.id} value={state.id}>{state.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
                   <label htmlFor="biz-city" className="form-label">City *</label>
                   <select
                     id="biz-city"
@@ -283,10 +319,15 @@ export default function AdminDashboard({
                     value={formData.cityId}
                     onChange={(e) => setFormData({ ...formData, cityId: e.target.value })}
                     required
+                    disabled={!formData.stateId || availableCities.length === 0}
                   >
-                    {cities.map((city) => (
-                      <option key={city.id} value={city.id}> {city.name}</option>
-                    ))}
+                    {availableCities.length > 0 ? (
+                      availableCities.map((city) => (
+                        <option key={city.id} value={city.id}>{city.name}</option>
+                      ))
+                    ) : (
+                      <option value="">Select a state first</option>
+                    )}
                   </select>
                 </div>
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>

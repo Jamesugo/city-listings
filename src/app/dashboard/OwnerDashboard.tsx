@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState, useCallback, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Business, Category, City } from '@/lib/types';
+import type { Business, Category, City, State } from '@/lib/types';
 import { upsertBusiness } from '../admin/actions';
 import { uploadMedia, deleteMedia } from '../admin/upload';
 import { logout } from '../admin/login/actions';
@@ -39,11 +39,13 @@ export default function OwnerDashboard({
   initialBusinesses,
   categories,
   cities,
+  states,
   initialTier,
 }: {
   initialBusinesses: Business[];
   categories: Category[];
   cities: City[];
+  states: State[];
   initialTier?: string;
 }) {
   const [businesses] = useState<Business[]>(initialBusinesses);
@@ -61,6 +63,14 @@ export default function OwnerDashboard({
     setTimeout(() => setToast(null), 4000);
   };
   
+  const getStateIdForCity = useCallback((cityId?: string, fallbackStateId?: string) => {
+    if (cityId) {
+      const city = cities.find((entry) => entry.id === cityId);
+      if (city?.stateId) return city.stateId;
+    }
+    return fallbackStateId || states[0]?.id || '';
+  }, [cities, states]);
+
   const [coverPreview, setCoverPreview] = useState<string | null>(
     hasBusiness ? businesses[0].coverImageUrl || null : null
   );
@@ -75,6 +85,7 @@ export default function OwnerDashboard({
     name: businesses[0].name,
     slug: businesses[0].slug,
     categoryId: businesses[0].categoryId,
+    stateId: getStateIdForCity(businesses[0].cityId, businesses[0].stateId),
     cityId: businesses[0].cityId,
     address: businesses[0].address,
     phone: businesses[0].phone,
@@ -88,7 +99,8 @@ export default function OwnerDashboard({
     name: '',
     slug: '',
     categoryId: categories[0]?.id ?? '',
-    cityId: cities[0]?.id ?? '',
+    stateId: states[0]?.id ?? '',
+    cityId: cities.find((city) => city.stateId === states[0]?.id)?.id ?? cities[0]?.id ?? '',
     address: '',
     phone: '',
     whatsapp: '',
@@ -100,6 +112,7 @@ export default function OwnerDashboard({
   };
 
   const [formData, setFormData] = useState(defaultFormData);
+  const availableCities = cities.filter((city) => city.stateId === formData.stateId);
   
   const slugify = (text: string): string =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -258,6 +271,47 @@ export default function OwnerDashboard({
                         {categories.map((cat) => (
                           <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="biz-state" className="form-label">State *</label>
+                      <select
+                        id="biz-state"
+                        className="form-input form-select"
+                        value={formData.stateId}
+                        onChange={(e) => {
+                          const nextStateId = e.target.value;
+                          const firstCity = cities.find((city) => city.stateId === nextStateId);
+                          setFormData({
+                            ...formData,
+                            stateId: nextStateId,
+                            cityId: firstCity?.id ?? '',
+                          });
+                        }}
+                        required
+                      >
+                        {states.map((state) => (
+                          <option key={state.id} value={state.id}>{state.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="biz-city" className="form-label">City *</label>
+                      <select
+                        id="biz-city"
+                        className="form-input form-select"
+                        value={formData.cityId}
+                        onChange={(e) => setFormData({ ...formData, cityId: e.target.value })}
+                        required
+                        disabled={!formData.stateId || availableCities.length === 0}
+                      >
+                        {availableCities.length > 0 ? (
+                          availableCities.map((city) => (
+                            <option key={city.id} value={city.id}>{city.name}</option>
+                          ))
+                        ) : (
+                          <option value="">Select a state first</option>
+                        )}
                       </select>
                     </div>
                     <div className={`form-group ${styles.fullWidth}`}>

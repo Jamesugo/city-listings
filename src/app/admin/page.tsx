@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getBusinessesAdmin, getCategories, getCities } from '@/lib/data';
+import { getBusinessesAdmin, getCategories, getCities, getStates } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
 import AdminDashboard from './AdminDashboard';
 
@@ -19,12 +19,14 @@ export default async function AdminPage() {
   const businesses = await getBusinessesAdmin();
   const categories = await getCategories();
   const cities = await getCities();
+  const states = await getStates();
 
   return (
     <AdminDashboard
       initialBusinesses={businesses}
       categories={categories}
       cities={cities}
+      states={states}
     />
   );
 }
