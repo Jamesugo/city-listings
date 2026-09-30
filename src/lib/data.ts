@@ -2,6 +2,7 @@
 import { createClient } from './supabase/server';
 import type { Category, State, City, Business, BusinessCard, Review } from './types';
 import { BUSINESSES, CATEGORIES, CITIES, STATES } from './mock-data';
+import { NIGERIAN_STATES } from './nigerianStates';
 
 export function isUuid(value?: string | null): boolean {
   return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -131,6 +132,78 @@ export async function resolveReferenceId(
   }
 
   return data?.id ?? undefined;
+}
+
+export async function resolveBusinessCity(
+  stateValue: string | undefined | null,
+  cityValue: string | undefined | null
+): Promise<{ id?: string; error?: string }> {
+  if (!stateValue || !cityValue) {
+    return { error: 'Please select both a state and city.' };
+  }
+
+  const state = NIGERIAN_STATES.find((entry) =>
+    entry.slug.toLowerCase() === stateValue.trim().toLowerCase() ||
+    entry.name.toLowerCase() === stateValue.trim().toLowerCase()
+  );
+  if (!state) return { error: 'The selected state is not valid.' };
+
+  const city = state.cities.find((entry) => entry.toLowerCase() === cityValue.trim().toLowerCase());
+  if (!city) return { error: 'The selected city does not belong to the selected state.' };
+
+  const supabase = await createClient();
+  let { data: stateRecord, error } = await supabase
+    .from('states')
+    .select('id')
+    .eq('slug', state.slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Failed to look up state ${state.slug}:`, error);
+    return { error: `Could not look up the selected state: ${error.message}` };
+  }
+
+  if (!stateRecord) {
+    const result = await supabase
+      .from('states')
+      .upsert({ name: state.name, slug: state.slug }, { onConflict: 'slug' })
+      .select('id')
+      .single();
+    stateRecord = result.data;
+    error = result.error;
+  }
+
+  if (error || !stateRecord) {
+    console.error(`Failed to create state ${state.slug}:`, error);
+    return { error: `Could not save the selected state${error?.message ? `: ${error.message}` : '.'}` };
+  }
+
+  const { data: cityRecord, error: cityLookupError } = await supabase
+    .from('cities')
+    .select('id')
+    .eq('name', city)
+    .eq('state_id', stateRecord.id)
+    .maybeSingle();
+
+  if (cityLookupError) {
+    console.error(`Failed to look up city ${city}, ${state.name}:`, cityLookupError);
+    return { error: `Could not look up the selected city: ${cityLookupError.message}` };
+  }
+  if (cityRecord) return { id: cityRecord.id };
+
+  const citySlug = `${city.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${state.slug}`;
+  const { data: createdCity, error: cityInsertError } = await supabase
+    .from('cities')
+    .upsert({ name: city, slug: citySlug, state_id: stateRecord.id }, { onConflict: 'slug' })
+    .select('id')
+    .single();
+
+  if (cityInsertError || !createdCity) {
+    console.error(`Failed to create city ${city}, ${state.name}:`, cityInsertError);
+    return { error: `Could not save the selected city${cityInsertError?.message ? `: ${cityInsertError.message}` : '.'}` };
+  }
+
+  return { id: createdCity.id };
 }
 
 // ============================================================

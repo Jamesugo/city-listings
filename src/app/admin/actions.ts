@@ -1,8 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { CATEGORIES, CITIES } from '@/lib/mock-data';
-import { resolveReferenceId } from '@/lib/data';
+import { CATEGORIES } from '@/lib/mock-data';
+import { resolveBusinessCity, resolveReferenceId } from '@/lib/data';
 import { revalidatePath } from 'next/cache';
 
 export async function upsertBusiness(formData: Record<string, unknown>) {
@@ -37,21 +37,20 @@ export async function upsertBusiness(formData: Record<string, unknown>) {
     'categories',
     CATEGORIES
   );
-  const resolvedCityId = await resolveReferenceId(
-    typeof formData.city_id === 'string' ? formData.city_id : undefined,
-    'cities',
-    CITIES
+  const resolvedCity = await resolveBusinessCity(
+    typeof formData.state_slug === 'string' ? formData.state_slug : undefined,
+    typeof formData.city_id === 'string' ? formData.city_id : undefined
   );
 
-  if (!resolvedCategoryId || !resolvedCityId) {
-    return { error: 'Please select a valid category and city before saving.' };
-  }
+  if (!resolvedCategoryId) return { error: 'Please select a valid category before saving.' };
+  if (!resolvedCity.id) return { error: resolvedCity.error ?? 'Please select a valid state and city before saving.' };
 
-  const cleanedFormData = {
+  const cleanedFormData: Record<string, unknown> = {
     ...formData,
     category_id: resolvedCategoryId,
-    city_id: resolvedCityId,
+    city_id: resolvedCity.id,
   };
+  delete cleanedFormData.state_slug;
 
   // Upsert business and return the inserted data to get the ID
   const { data: bizData, error } = await supabase

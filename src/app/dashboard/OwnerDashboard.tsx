@@ -67,12 +67,17 @@ export default function OwnerDashboard({
   const getStateIdForCity = useCallback((cityId?: string, fallbackStateId?: string) => {
     if (cityId) {
       const city = cities.find((entry) => entry.id === cityId);
-      if (city?.stateId) return city.stateId;
+      if (city?.stateId) {
+        const state = states.find((entry) => entry.id === city.stateId);
+        return state?.slug ?? NIGERIAN_STATES.find((entry) => entry.name === city.stateName)?.slug ?? NIGERIAN_STATES[0]?.slug ?? '';
+      }
     }
-    if (fallbackStateId) return fallbackStateId;
+    if (fallbackStateId) {
+      return states.find((entry) => entry.id === fallbackStateId)?.slug ?? fallbackStateId;
+    }
     const defaultState = NIGERIAN_STATES[0];
     return defaultState?.slug || '';
-  }, [cities]);
+  }, [cities, states]);
 
   const [coverPreview, setCoverPreview] = useState<string | null>(
     hasBusiness ? businesses[0].coverImageUrl || null : null
@@ -134,6 +139,7 @@ export default function OwnerDashboard({
         name: formData.name,
         slug: formData.slug,
         category_id: formData.categoryId,
+        state_slug: formData.stateId,
         city_id: formData.cityId,
         address: formData.address,
         phone: formData.phone,

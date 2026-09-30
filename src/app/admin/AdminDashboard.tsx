@@ -47,10 +47,13 @@ export default function AdminDashboard({
   const getStateIdForCity = useCallback((cityId?: string) => {
     if (cityId) {
       const city = cities.find((entry) => entry.id === cityId);
-      if (city?.stateId) return city.stateId;
+      if (city?.stateId) {
+        const state = states.find((entry) => entry.id === city.stateId);
+        return state?.slug ?? NIGERIAN_STATES.find((entry) => entry.name === city.stateName)?.slug ?? NIGERIAN_STATES[0]?.slug ?? '';
+      }
     }
     return NIGERIAN_STATES[0]?.slug || '';
-  }, [cities]);
+  }, [cities, states]);
 
   // Form state
   const defaultFormData = {
@@ -107,7 +110,7 @@ export default function AdminDashboard({
       slug: biz.slug,
       categoryId: biz.categoryId,
       stateId: getStateIdForCity(biz.cityId),
-      cityId: biz.cityId,
+      cityId: cities.find((city) => city.id === biz.cityId)?.name ?? '',
       address: biz.address,
       phone: biz.phone,
       whatsapp: biz.whatsapp ?? '',
@@ -121,7 +124,7 @@ export default function AdminDashboard({
     });
     setEditingId(biz.id);
     setShowForm(true);
-  }, [getStateIdForCity]);
+  }, [cities, getStateIdForCity]);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +136,7 @@ export default function AdminDashboard({
         name: formData.name,
         slug: formData.slug,
         category_id: formData.categoryId,
+        state_slug: formData.stateId,
         city_id: formData.cityId,
         address: formData.address,
         phone: formData.phone,
