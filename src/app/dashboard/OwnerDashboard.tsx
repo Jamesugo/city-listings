@@ -92,7 +92,7 @@ export default function OwnerDashboard({
   const defaultFormData = hasBusiness ? {
     name: businesses[0].name,
     slug: businesses[0].slug,
-    categoryId: businesses[0].categoryId,
+    categoryId: businesses[0].categoryId || categories[0]?.id || '',
     stateId: getStateIdForCity(businesses[0].cityId, businesses[0].stateId),
     cityId: (() => {
       const city = cities.find((entry) => entry.id === businesses[0].cityId);
@@ -109,7 +109,7 @@ export default function OwnerDashboard({
   } : {
     name: '',
     slug: '',
-    categoryId: categories[0]?.id ?? '',
+    categoryId: categories[0]?.id || '',
     stateId: NIGERIAN_STATES[0]?.slug ?? '',
     cityId: NIGERIAN_STATES[0]?.cities[0] ?? '',
     address: '',
@@ -132,6 +132,16 @@ export default function OwnerDashboard({
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.categoryId || !categories.some((cat) => cat.id === formData.categoryId || cat.slug === formData.categoryId)) {
+      showToast('error', 'Please select a valid category before saving.');
+      return;
+    }
+
+    if (!formData.stateId || !formData.cityId) {
+      showToast('error', 'Please select both a valid state and city before saving.');
+      return;
+    }
     
     startTransition(async () => {
       const dbData = {
@@ -163,7 +173,7 @@ export default function OwnerDashboard({
         }
       }
     });
-  }, [editingId, formData, router]);
+  }, [categories, editingId, formData, router]);
 
   return (
     <div className={styles.page}>
@@ -278,10 +288,11 @@ export default function OwnerDashboard({
                       <select
                         id="biz-category"
                         className="form-input form-select"
-                        value={formData.categoryId}
+                        value={formData.categoryId || ''}
                         onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                         required
                       >
+                        <option value="">Select a category</option>
                         {categories.map((cat) => (
                           <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
