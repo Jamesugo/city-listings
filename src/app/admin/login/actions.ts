@@ -19,7 +19,8 @@ function isValidPassword(value: string, minLength = 8): boolean {
 
 export async function login(formData: FormData) {
   const email = normalizeEmail(formData.get('email'));
-  const password = typeof formData.get('password') === 'string' ? formData.get('password') : '';
+  const passwordValue = formData.get('password');
+  const password = typeof passwordValue === 'string' ? passwordValue : '';
   const supabase = await createClient();
 
   if (!isValidEmail(email)) {
@@ -35,7 +36,8 @@ export async function login(formData: FormData) {
     password,
   });
 
-  const tier = formData.get('tier') as string;
+  const tierValue = formData.get('tier');
+  const tier = typeof tierValue === 'string' ? tierValue : '';
   const queryString = tier ? `?tier=${tier}` : '';
 
   if (error) {
@@ -47,7 +49,8 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const email = normalizeEmail(formData.get('email'));
-  const password = typeof formData.get('password') === 'string' ? formData.get('password') : '';
+  const passwordValue = formData.get('password');
+  const password = typeof passwordValue === 'string' ? passwordValue : '';
   const supabase = await createClient();
 
   if (!isValidEmail(email)) {
@@ -63,7 +66,8 @@ export async function signup(formData: FormData) {
     password,
   });
 
-  const tier = formData.get('tier') as string;
+  const tierValue = formData.get('tier');
+  const tier = typeof tierValue === 'string' ? tierValue : '';
   const queryString = tier ? `?tier=${tier}` : '';
 
   if (error) {
