@@ -456,7 +456,9 @@ export async function getBusinesses(filters: {
     p_offset: 0     // We'll paginate in memory if openNow is true, or let SQL handle it if false.
   });
 
-  if (!rpcError && rpcData) {
+  const hasRpcResults = Array.isArray(rpcData) && rpcData.length > 0;
+
+  if (!rpcError && hasRpcResults) {
     let results = rpcData;
     
     // JS Filtering for openNow
@@ -497,7 +499,9 @@ export async function getBusinesses(filters: {
     }));
   }
 
-  // Fallback to original query if RPC fails (e.g., script not run yet)
+  // Fallback to the plain query whenever the RPC is unavailable or returns no rows.
+  // This prevents empty business listings when the geospatial function is not yet created,
+  // has stale state, or returns an empty payload while the underlying businesses table still has data.
   console.warn("Falling back to standard query. Ensure geo_search_update.sql is run in Supabase.");
   const from = offset;
   const to = from + pageSize - 1;
