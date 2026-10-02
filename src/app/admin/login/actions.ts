@@ -3,10 +3,32 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function normalizeEmail(value: FormDataEntryValue | null | undefined): string {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+function isValidEmail(value: string): boolean {
+  return EMAIL_PATTERN.test(value);
+}
+
+function isValidPassword(value: string, minLength = 8): boolean {
+  return value.length >= minLength;
+}
+
 export async function login(formData: FormData) {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  const email = normalizeEmail(formData.get('email'));
+  const password = typeof formData.get('password') === 'string' ? formData.get('password') : '';
   const supabase = await createClient();
+
+  if (!isValidEmail(email)) {
+    return redirect('/admin/login?error=' + encodeURIComponent('Please provide a valid email address.'));
+  }
+
+  if (!isValidPassword(password)) {
+    return redirect('/admin/login?error=' + encodeURIComponent('Password must be at least 8 characters long.'));
+  }
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -17,16 +39,24 @@ export async function login(formData: FormData) {
   const queryString = tier ? `?tier=${tier}` : '';
 
   if (error) {
-    return redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
+    return redirect('/admin/login?error=' + encodeURIComponent('Invalid email or password.'));
   }
 
   return redirect(`/dashboard${queryString}`);
 }
 
 export async function signup(formData: FormData) {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  const email = normalizeEmail(formData.get('email'));
+  const password = typeof formData.get('password') === 'string' ? formData.get('password') : '';
   const supabase = await createClient();
+
+  if (!isValidEmail(email)) {
+    return redirect('/admin/login?error=' + encodeURIComponent('Please provide a valid email address.'));
+  }
+
+  if (!isValidPassword(password)) {
+    return redirect('/admin/login?error=' + encodeURIComponent('Password must be at least 8 characters long.'));
+  }
 
   const { data: authData, error } = await supabase.auth.signUp({
     email,
@@ -37,7 +67,7 @@ export async function signup(formData: FormData) {
   const queryString = tier ? `?tier=${tier}` : '';
 
   if (error) {
-    return redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
+    return redirect('/admin/login?error=' + encodeURIComponent('Unable to create your account. Please try again.'));
   }
 
   if (authData.user) {
@@ -58,7 +88,7 @@ export async function signInWithGoogle(formData?: FormData) {
   const next = typeof tier === 'string' && ['free', 'pro', 'premium'].includes(tier)
     ? `/dashboard?tier=${encodeURIComponent(tier)}`
     : '/dashboard';
-  
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -69,10 +99,12 @@ export async function signInWithGoogle(formData?: FormData) {
   if (data.url) {
     redirect(data.url);
   }
-  
+
   if (error) {
-    return redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
+    return redirect('/admin/login?error=' + encodeURIComponent('Google sign-in is unavailable right now.'));
   }
+
+  return redirect('/admin/login?error=' + encodeURIComponent('Google sign-in could not be started.'));
 }
 
 export async function logout() {
@@ -82,16 +114,20 @@ export async function logout() {
 }
 
 export async function resetPassword(formData: FormData) {
-  const email = formData.get('email') as string;
+  const email = normalizeEmail(formData.get('email'));
   const supabase = await createClient();
+
+  if (!isValidEmail(email)) {
+    return redirect('/admin/login?error=' + encodeURIComponent('Please provide a valid email address.'));
+  }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/admin/update-password`,
   });
 
   if (error) {
-    return redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
+    return redirect('/admin/login?error=' + encodeURIComponent('We could not send the reset link. Please try again later.'));
   }
 
-  return redirect(`/admin/login?message=${encodeURIComponent('Password reset link sent to your email.')}`);
+  return redirect('/admin/login?message=' + encodeURIComponent('Password reset link sent to your email.'));
 }

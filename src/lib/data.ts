@@ -8,6 +8,20 @@ export function isUuid(value?: string | null): boolean {
   return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+export function normalizeReferenceLookup(value: string | undefined | null): string | undefined {
+  if (!value) return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  // Allow only common slug/name characters for table lookup values. This prevents query-string injection patterns.
+  if (!/^[A-Za-z0-9][A-Za-z0-9\s'&()./:_-]*$/.test(trimmed)) {
+    return undefined;
+  }
+
+  return trimmed;
+}
+
 export function mapLegacyReferenceId<T extends { id: string; slug: string }>(value: string | undefined | null, referenceList: T[] = []): string | undefined {
   if (!value) return undefined;
   if (isUuid(value)) return value;
@@ -117,21 +131,36 @@ export async function resolveReferenceId(
   if (isUuid(value)) return value;
 
   const lookupValue = mapLegacyReferenceId(value, referenceList) ?? value;
-  const normalizedValue = lookupValue.trim();
+  const normalizedValue = normalizeReferenceLookup(lookupValue);
+  if (!normalizedValue) return undefined;
+
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const slugLookup = await supabase
     .from(table)
     .select('id, slug, name')
-    .or(`slug.eq.${normalizedValue},name.eq.${normalizedValue}`)
+    .eq('slug', normalizedValue)
     .maybeSingle();
 
-  if (error) {
-    console.error(`Failed to resolve ${table} for value ${value}:`, error);
+  if (slugLookup.error && slugLookup.error.code !== 'PGRST116') {
+    console.error(`Failed to resolve ${table} slug for value ${value}:`, slugLookup.error);
     return undefined;
   }
 
-  return data?.id ?? undefined;
+  if (slugLookup.data?.id) return slugLookup.data.id;
+
+  const nameLookup = await supabase
+    .from(table)
+    .select('id, slug, name')
+    .eq('name', normalizedValue)
+    .maybeSingle();
+
+  if (nameLookup.error && nameLookup.error.code !== 'PGRST116') {
+    console.error(`Failed to resolve ${table} name for value ${value}:`, nameLookup.error);
+    return undefined;
+  }
+
+  return nameLookup.data?.id ?? undefined;
 }
 
 export async function resolveBusinessCity(

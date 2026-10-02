@@ -5,18 +5,34 @@ import { revalidatePath } from 'next/cache';
 
 const BUCKET = 'business-media';
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp']);
+
+function getSafeFileExtension(fileName: string): string {
+  return fileName.split('.').pop()?.toLowerCase() || '';
+}
 
 export async function uploadMedia(formData: FormData) {
-  const file = formData.get('file') as File;
-  const businessId = formData.get('businessId') as string;
-  const mediaType = formData.get('mediaType') as string; // 'cover' | 'gallery'
+  const file = formData.get('file') as File | null;
+  const businessId = formData.get('businessId') as string | null;
+  const mediaType = formData.get('mediaType') as string | null; // 'cover' | 'gallery'
 
   if (!file || !businessId) {
     return { error: 'Missing file or business ID' };
   }
 
+  if (!['cover', 'gallery'].includes(mediaType || '')) {
+    return { error: 'Invalid media type.' };
+  }
+
+  const extension = getSafeFileExtension(file.name);
+  const contentType = file.type || '';
   if (file.size > MAX_FILE_SIZE) {
     return { error: 'File too large. Maximum size is 50MB.' };
+  }
+
+  if (!ALLOWED_CONTENT_TYPES.has(contentType) && !ALLOWED_EXTENSIONS.has(extension)) {
+    return { error: 'Unsupported file type. Please upload JPG, PNG, or WEBP images only.' };
   }
 
   const supabase = await createClient();
