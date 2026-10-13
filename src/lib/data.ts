@@ -582,12 +582,15 @@ export async function getBusinesses(filters: {
 }
 
 // Full Business[] fetch for the admin dashboard (includes inactive + all fields)
-export async function getBusinessesAdmin(): Promise<Business[]> {
+export async function getBusinessesAdmin(businessId?: string): Promise<Business[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from('businesses')
     .select(`*, categories(id, name, slug), cities(id, name, slug, state_id, states(name))`)
     .order('created_at', { ascending: false });
+  if (businessId) query = query.eq('id', businessId);
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching businesses (admin):', error);
@@ -623,6 +626,9 @@ export async function getBusinessesAdmin(): Promise<Business[]> {
     updatedAt: b.updated_at,
     pageViews: b.page_views || 0,
     whatsappClicks: b.whatsapp_clicks || 0,
+    callClicks: b.call_clicks || 0,
+    subscriptionTier: b.subscription_tier || 'free',
+    videoGallery: b.video_gallery || [],
   }));
 }
 
@@ -788,4 +794,3 @@ export async function getRecentReviews(limit: number = 6): Promise<Review[]> {
     } : undefined,
   }));
 }
-

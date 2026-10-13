@@ -92,7 +92,11 @@ export default function OwnerDashboard({
   const defaultFormData = hasBusiness ? {
     name: businesses[0].name,
     slug: businesses[0].slug,
-    categoryId: businesses[0].categoryId || categories[0]?.id || '',
+    categoryId: categories.find((category) =>
+      category.id === businesses[0].categoryId ||
+      category.slug === businesses[0].categorySlug ||
+      category.name === businesses[0].categoryName
+    )?.id || categories[0]?.id || '',
     stateId: getStateIdForCity(businesses[0].cityId, businesses[0].stateId),
     cityId: (() => {
       const city = cities.find((entry) => entry.id === businesses[0].cityId);
@@ -167,10 +171,7 @@ export default function OwnerDashboard({
         showToast('error', 'Error saving profile: ' + result.error);
       } else {
         showToast('success', `Profile saved successfully!`);
-        if (!editingId) {
-          // It was created, need to refresh to get ID for media
-          router.refresh();
-        }
+        router.refresh();
       }
     });
   }, [categories, editingId, formData, router]);
@@ -291,12 +292,18 @@ export default function OwnerDashboard({
                         value={formData.categoryId || ''}
                         onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                         required
+                        disabled={categories.length === 0}
                       >
-                        <option value="">Select a category</option>
+                        <option value="">{categories.length > 0 ? 'Select a category' : 'Categories unavailable'}</option>
                         {categories.map((cat) => (
                           <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
                       </select>
+                      {categories.length === 0 && (
+                        <p role="alert" style={{ color: 'var(--color-error)', fontSize: 'var(--font-size-sm)' }}>
+                          Categories could not be loaded. Refresh the page and try again.
+                        </p>
+                      )}
                     </div>
                     <div className="form-group">
                       <label htmlFor="biz-state" className="form-label">State *</label>
@@ -585,7 +592,7 @@ export default function OwnerDashboard({
                             <input
                               ref={galleryInputRef}
                               type="file"
-                              accept="image/*,video/*"
+                              accept="image/jpeg,image/png,image/webp"
                               multiple
                               style={{ display: 'none' }}
                               onChange={async (e) => {
@@ -948,6 +955,10 @@ export default function OwnerDashboard({
                   if (result.error) {
                     showToast('error', 'Failed to update subscription');
                   } else {
+                    setFormData((current) => ({
+                      ...current,
+                      subscriptionTier: selectedTier as 'free' | 'pro' | 'premium',
+                    }));
                     showToast('success', `Successfully updated to ${selectedTier.toUpperCase()} tier!`);
                     router.refresh();
                   }

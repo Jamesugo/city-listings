@@ -52,23 +52,22 @@ export default async function DashboardPage({
     ownerProfile = createdProfile;
   }
 
-  let businesses: Business[] = [];
-  if (ownerProfile.business_id) {
-    const all = await getBusinessesAdmin();
-    businesses = all.filter(b => b.id === ownerProfile.business_id);
-  }
-
-  const categories = await getCategories();
-  const cities = await getCities();
-  const states = await getStates();
+  const [businesses, categories, cities, states] = await Promise.all([
+    ownerProfile.business_id ? getBusinessesAdmin(ownerProfile.business_id) : Promise.resolve([] as Business[]),
+    getCategories(),
+    getCities(),
+    getStates(),
+  ]);
+  const initialTier = tier === 'pro' || tier === 'premium' ? tier : 'free';
 
   return (
     <OwnerDashboard
+      key={`${businesses[0]?.id ?? 'new'}:${businesses[0]?.updatedAt ?? ''}`}
       initialBusinesses={businesses}
       categories={categories}
       cities={cities}
       states={states}
-      initialTier={tier}
+      initialTier={initialTier}
     />
   );
 }

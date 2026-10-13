@@ -108,7 +108,11 @@ export default function AdminDashboard({
     setFormData({
       name: biz.name,
       slug: biz.slug,
-      categoryId: biz.categoryId,
+      categoryId: categories.find((category) =>
+        category.id === biz.categoryId ||
+        category.slug === biz.categorySlug ||
+        category.name === biz.categoryName
+      )?.id ?? categories[0]?.id ?? '',
       stateId: getStateIdForCity(biz.cityId),
       cityId: cities.find((city) => city.id === biz.cityId)?.name ?? '',
       address: biz.address,
@@ -124,7 +128,7 @@ export default function AdminDashboard({
     });
     setEditingId(biz.id);
     setShowForm(true);
-  }, [cities, getStateIdForCity]);
+  }, [categories, cities, getStateIdForCity]);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -290,11 +294,18 @@ export default function AdminDashboard({
                     value={formData.categoryId}
                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                     required
+                    disabled={categories.length === 0}
                   >
+                    {categories.length === 0 && <option value="">Categories unavailable</option>}
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
+                  {categories.length === 0 && (
+                    <p role="alert" style={{ color: 'var(--color-error)', fontSize: 'var(--font-size-sm)' }}>
+                      Categories could not be loaded. Refresh the page and try again.
+                    </p>
+                  )}
                 </div>
                 <div className="form-group">
                   <label htmlFor="biz-state" className="form-label">State *</label>
