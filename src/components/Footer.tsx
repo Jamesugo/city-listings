@@ -16,9 +16,9 @@ export default async function Footer() {
 
         {/* Brand column */}
         <div className={styles.brand}>
-          <Link href="/" className={styles.logo} aria-label="NaijaList home">
+          <Link href="/" className={styles.logo} aria-label="NaijaVestor home">
             <span aria-hidden="true">🇳🇬</span>
-            <span>Naija<strong>List</strong></span>
+            <span>Naija<strong>Vestor</strong></span>
           </Link>
           <p className={styles.tagline}>
             Nigeria&apos;s most trusted business directory. Find verified local businesses, connect via WhatsApp, and leave real reviews.
@@ -96,7 +96,7 @@ export default async function Footer() {
         <div className={styles.column}>
           <h3 className={styles.columnTitle}>Company</h3>
           <ul className={styles.linkList}>
-            <li><Link href="/about" className={styles.footerLink}>About NaijaList</Link></li>
+            <li><Link href="/about" className={styles.footerLink}>About NaijaVestor</Link></li>
             <li><Link href="/admin" className={styles.footerLink}>List Your Business</Link></li>
             <li><Link href="/contact" className={styles.footerLink}>Contact Us</Link></li>
             <li><Link href="/faq" className={styles.footerLink}>FAQ</Link></li>
@@ -105,7 +105,7 @@ export default async function Footer() {
           </ul>
           {/* WhatsApp support */}
           <a
-            href="https://wa.me/2348000000000?text=Hello%20NaijaList%2C%20I%20need%20help"
+            href="https://wa.me/2348000000000?text=Hello%20NaijaVestor%2C%20I%20need%20help"
             target="_blank"
             rel="noopener noreferrer"
             className={styles.whatsappSupport}
@@ -121,10 +121,10 @@ export default async function Footer() {
       <div className={styles.bottomBar}>
         <div className="container">
           <p className={styles.copyright}>
-            © {new Date().getFullYear()} NaijaList. Made with ❤️ for Nigerian businesses.
+            © {new Date().getFullYear()} NaijaVestor. Made with ❤️ for Nigerian businesses.
           </p>
           <p className={styles.disclaimer}>
-            NaijaList is an independent business directory. We do not endorse or guarantee any listed business.
+            NaijaVestor is an independent business directory. We do not endorse or guarantee any listed business.
           </p>
         </div>
       </div>

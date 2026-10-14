@@ -52,7 +52,7 @@ export default function LoginForm({ error, message, tier }: { error?: string; me
           {isLogin ? 'Welcome Back' : isSignup ? 'Create an Account' : 'Reset Password'}
         </h1>
         <p className={styles.loginDesc}>
-          {isLogin ? 'Sign in to manage your business listings.' : isSignup ? 'Join NaijaList to discover or list your business.' : 'Enter your email and we will send you a reset link.'}
+          {isLogin ? 'Sign in to manage your business listings.' : isSignup ? 'Join NaijaVestor to discover or list your business.' : 'Enter your email and we will send you a reset link.'}
         </p>
         
         {error && (
@@ -136,8 +136,9 @@ export default function LoginForm({ error, message, tier }: { error?: string; me
               type="password"
               className="form-input"
               required={!isForgot}
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
+              placeholder="Minimum 8 characters"
               style={{ padding: '0.75rem' }}
             />
           </div>

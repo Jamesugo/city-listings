@@ -127,6 +127,7 @@ export async function deleteBusiness(id: string) {
   }
 
   revalidatePath('/admin');
+  revalidatePath('/dashboard');
   revalidatePath('/businesses');
   return { success: true };
 }

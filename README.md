@@ -1,6 +1,6 @@
-# NaijaList
+# NaijaVestor
 
-NaijaList is a modern, mobile-first business directory for Nigeria. Built with Next.js 16 (App Router), it prioritizes fast discovery, WhatsApp integration, and premium design aesthetics.
+NaijaVestor is a modern, mobile-first business directory for Nigeria. Built with Next.js 16 (App Router), it prioritizes fast discovery, WhatsApp integration, and premium design aesthetics.
 
 ## Phase 1 Overview
 This repository contains the Phase 1 MVP. It operates entirely on in-memory mock data to demonstrate the UI, routing, SEO structure, and component architecture.

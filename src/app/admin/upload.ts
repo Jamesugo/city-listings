@@ -39,6 +39,22 @@ export async function uploadMedia(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not authenticated' };
 
+  const { data: dbUser, error: userLookupError } = await supabase
+    .from('users')
+    .select('role, business_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (userLookupError) {
+    console.error('Error fetching user profile for upload:', userLookupError);
+    return { error: 'Could not verify your account permissions.' };
+  }
+
+  const role = dbUser?.role || 'owner';
+  if (role === 'owner' && dbUser?.business_id !== businessId) {
+    return { error: 'Unauthorized: You can only upload media for your own business.' };
+  }
+
   // Generate a unique filename
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const timestamp = Date.now();
@@ -87,7 +103,8 @@ export async function uploadMedia(formData: FormData) {
   }
 
   revalidatePath('/admin');
-  revalidatePath(`/businesses`);
+  revalidatePath('/dashboard');
+  revalidatePath('/businesses');
   return { success: true, url: publicUrl };
 }
 
@@ -95,6 +112,22 @@ export async function deleteMedia(url: string, businessId: string, mediaType: 'c
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not authenticated' };
+
+  const { data: dbUser, error: userLookupError } = await supabase
+    .from('users')
+    .select('role, business_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (userLookupError) {
+    console.error('Error fetching user profile for delete media:', userLookupError);
+    return { error: 'Could not verify your account permissions.' };
+  }
+
+  const role = dbUser?.role || 'owner';
+  if (role === 'owner' && dbUser?.business_id !== businessId) {
+    return { error: 'Unauthorized: You can only delete media from your own business.' };
+  }
 
   // Extract the file path from the URL
   const bucketUrl = supabase.storage.from(BUCKET).getPublicUrl('').data.publicUrl;
@@ -126,6 +159,7 @@ export async function deleteMedia(url: string, businessId: string, mediaType: 'c
   }
 
   revalidatePath('/admin');
-  revalidatePath(`/businesses`);
+  revalidatePath('/dashboard');
+  revalidatePath('/businesses');
   return { success: true };
 }

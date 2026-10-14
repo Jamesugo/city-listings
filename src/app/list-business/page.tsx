@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'List Your Business on NaijaList — Reach Thousands of Customers',
+  title: 'List Your Business on NaijaVestor — Reach Thousands of Customers',
   description:
-    'Add your business to NaijaList and connect with thousands of customers in Enugu State. Free listing, WhatsApp contact, verified badges, and real reviews.',
+    'Add your business to NaijaVestor and connect with thousands of customers in Enugu State. Free listing, WhatsApp contact, verified badges, and real reviews.',
 };
 
 const TIERS = [
@@ -83,7 +83,7 @@ export default function ListBusinessPage() {
             padding: '0.4rem 1rem', fontSize: 'var(--font-size-sm)',
             fontWeight: 600, marginBottom: '1.5rem', backdropFilter: 'blur(8px)',
           }}>
-            🇳🇬 NaijaList Business Directory
+            🇳🇬 NaijaVestor Business Directory
           </div>
           <h1 style={{
             fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900,
@@ -96,7 +96,7 @@ export default function ListBusinessPage() {
             fontSize: '1.2rem', opacity: 0.9, lineHeight: 1.7,
             maxWidth: 560, margin: '0 auto 2rem',
           }}>
-            Join hundreds of businesses already listed on NaijaList. Get discovered by customers searching for services in Enugu State — for free.
+            Join hundreds of businesses already listed on NaijaVestor. Get discovered by customers searching for services in Enugu State — for free.
           </p>
           <Link
             href="/admin/login"
@@ -215,7 +215,7 @@ export default function ListBusinessPage() {
             Ready to grow your business?
           </h2>
           <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: 1.7 }}>
-            Join hundreds of businesses already connecting with customers daily on NaijaList.
+            Join hundreds of businesses already connecting with customers daily on NaijaVestor.
           </p>
           <Link href="/admin/login" className="btn btn-primary" id="list-bottom-cta" style={{ fontSize: '1.05rem', padding: '0.85rem 2rem' }}>
             Create Free Listing →

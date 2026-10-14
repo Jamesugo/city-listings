@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import type { User } from '@supabase/supabase-js';
+import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { Building2, FolderOpen, KeyRound, Plus, MapPin, User as UserIcon } from '@/components/Icons';
 import styles from './Navbar.module.css';
@@ -44,18 +44,20 @@ export default function Navbar() {
     };
 
     // Initial session check
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
       syncUser(data.user);
     });
 
     // Listen to auth changes — fires on sign in, sign out, token refresh
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      syncUser(session?.user ?? null);
-      // Force server components to re-render so the Navbar reflects the correct session
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        router.refresh();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        syncUser(session?.user ?? null);
+        // Force server components to re-render so the Navbar reflects the correct session
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+          router.refresh();
+        }
       }
-    });
+    );
 
     return () => subscription.unsubscribe();
   }, [router]);
@@ -71,10 +73,10 @@ export default function Navbar() {
     >
       <div className={`container ${styles.inner}`}>
         {/* Logo */}
-        <Link href="/" className={`${styles.logo} ${isTransparent ? styles.transparentText : ''}`} onClick={closeMenu} aria-label="NaijaList home">
+        <Link href="/" className={`${styles.logo} ${isTransparent ? styles.transparentText : ''}`} onClick={closeMenu} aria-label="NaijaVestor home">
           <MapPin className={styles.logoIcon} size={24} style={{ color: isTransparent ? 'white' : 'var(--color-primary)' }} aria-hidden="true" />
           <span className={styles.logoText}>
-            Naija<span className={styles.logoAccent} style={{ color: isTransparent ? 'white' : 'var(--color-primary)' }}>List</span>
+            Naija<span className={styles.logoAccent} style={{ color: isTransparent ? 'white' : 'var(--color-primary)' }}>Vestor</span>
           </span>
         </Link>
 

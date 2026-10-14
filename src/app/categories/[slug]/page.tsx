@@ -28,7 +28,7 @@ export async function generateMetadata({
 
   return {
     title: `${cat.name} — Businesses in Enugu State`,
-    description: `Find the best ${cat.name.toLowerCase()} in Enugu State, Nigeria. Browse verified listings with WhatsApp contact on NaijaList.`,
+    description: `Find the best ${cat.name.toLowerCase()} in Enugu State, Nigeria. Browse verified listings with WhatsApp contact on NaijaVestor.`,
   };
 }
 
@@ -100,7 +100,7 @@ export default async function CategoryDetailPage({
             <p className="empty-state__desc">
               Know a business in this category?{' '}
               <Link href="/admin" style={{ color: 'var(--color-primary)' }}>
-                Add it to NaijaList
+                Add it to NaijaVestor
               </Link>
             </p>
           </div>

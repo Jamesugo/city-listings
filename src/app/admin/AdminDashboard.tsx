@@ -215,7 +215,7 @@ export default function AdminDashboard({
           <div className={styles.headerRow}>
             <div>
               <h1 className={styles.title}>Admin Dashboard</h1>
-              <p className={styles.subtitle}>Manage NaijaList business listings</p>
+              <p className={styles.subtitle}>Manage NaijaVestor business listings</p>
             </div>
             <div className={styles.headerActions}>
                 <button

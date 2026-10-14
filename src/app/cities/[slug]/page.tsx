@@ -29,7 +29,7 @@ export async function generateMetadata({
 
   return {
     title: `Businesses in ${city.name}, ${city.stateName} State`,
-    description: `Discover verified local businesses in ${city.name}, ${city.stateName} State, Nigeria. Browse all categories on NaijaList.`,
+    description: `Discover verified local businesses in ${city.name}, ${city.stateName} State, Nigeria. Browse all categories on NaijaVestor.`,
   };
 }
 
@@ -102,7 +102,7 @@ export default async function CityDetailPage({
             <p className="empty-state__desc">
               Know a business here?{' '}
               <Link href="/admin" style={{ color: 'var(--color-primary)' }}>
-                Add it to NaijaList
+                Add it to NaijaVestor
               </Link>
             </p>
           </div>

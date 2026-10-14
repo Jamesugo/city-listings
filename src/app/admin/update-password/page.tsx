@@ -3,7 +3,7 @@ import UpdatePasswordForm from './UpdatePasswordForm';
 import styles from '../page.module.css';
 
 export const metadata: Metadata = {
-  title: 'Update Password — NaijaList',
+  title: 'Update Password — NaijaVestor',
 };
 
 export default async function UpdatePasswordPage({

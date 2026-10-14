@@ -6,7 +6,7 @@ import StateExplorer from './StateExplorer';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
-  title: 'Nigerian States & Cities — NaijaList',
+  title: 'Nigerian States & Cities — NaijaVestor',
   description: 'Explore Nigerian states, cities, and the local businesses listed in each city.',
 };
 

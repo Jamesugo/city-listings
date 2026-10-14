@@ -1,5 +1,5 @@
 // ============================================================
-// Core TypeScript types for NaijaList
+// Core TypeScript types for NaijaVestor
 // Designed to map 1:1 to the Supabase/PostgreSQL schema
 // ============================================================
 

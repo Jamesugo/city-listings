@@ -13,8 +13,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: 'NaijaList — Nigeria Business Directory | Find Local Businesses',
-    template: '%s | NaijaList',
+    default: 'NaijaVestor — Nigeria Business Directory | Find Local Businesses',
+    template: '%s | NaijaVestor',
   },
   description:
     'Discover and contact Nigerian businesses near you. Browse restaurants, shops, clinics, professionals, and more across Enugu State. Nigeria\'s most trusted business directory.',
@@ -24,18 +24,18 @@ export const metadata: Metadata = {
     'find businesses Nigeria',
     'Nigerian SMEs',
     'business listings Nigeria',
-    'NaijaList',
+    'NaijaVestor',
   ],
-  metadataBase: new URL('https://naijalist.com.ng'),
+  metadataBase: new URL('https://naijavestor.com.ng'),
   openGraph: {
     type: 'website',
-    siteName: 'NaijaList',
-    title: 'NaijaList — Nigeria Business Directory',
+    siteName: 'NaijaVestor',
+    title: 'NaijaVestor — Nigeria Business Directory',
     description: 'Find trusted local businesses across Nigeria. Verified listings, WhatsApp contact, real reviews.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'NaijaList — Nigeria Business Directory',
+    title: 'NaijaVestor — Nigeria Business Directory',
     description: 'Find trusted local businesses across Nigeria.',
   },
   robots: {

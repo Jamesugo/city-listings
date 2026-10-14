@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { createBuildClient } from '@/lib/supabase/build-client';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://naijalist.com.ng';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://naijavestor.com.ng';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createBuildClient();

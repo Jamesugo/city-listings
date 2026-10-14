@@ -9,7 +9,7 @@ import { CATEGORIES } from '@/lib/mock-data';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
-  title: 'NaijaList — Nigeria Business Directory | Find Local Businesses Across Nigeria',
+  title: 'NaijaVestor — Nigeria Business Directory | Find Local Businesses Across Nigeria',
   description:
     'Discover trusted local businesses across Nigeria. Restaurants, clinics, professionals, shops and more — with WhatsApp contact, verified listings, and real reviews.',
 };
@@ -104,7 +104,7 @@ export default async function HomePage() {
       <section className={`section ${styles.howSection}`} aria-labelledby="how-heading">
         <div className="container">
           <h2 id="how-heading" className="section-title" style={{ textAlign: 'center' }}>
-            How NaijaList Works
+            How NaijaVestor Works
           </h2>
           <p className="section-subtitle" style={{ textAlign: 'center' }}>
             Connecting customers with local businesses — simply and fast
@@ -155,7 +155,7 @@ export default async function HomePage() {
                 Own a Business in Enugu?
               </h2>
               <p className={styles.ctaDesc}>
-                Get discovered by thousands of customers. List your business for free — be found on WhatsApp, Google, and NaijaList.
+                Get discovered by thousands of customers. List your business for free — be found on WhatsApp, Google, and NaijaVestor.
               </p>
               <div className={styles.ctaBullets}>
                 {[

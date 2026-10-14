@@ -3,7 +3,7 @@ import styles from './page.module.css';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms of Service for NaijaList.',
+  description: 'Terms of Service for NaijaVestor.',
 };
 
 export default function TermsOfServicePage() {
@@ -22,12 +22,12 @@ export default function TermsOfServicePage() {
           
           <h2>1. Acceptance of Terms</h2>
           <p>
-            By accessing or using NaijaList, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, then you may not access the service.
+            By accessing or using NaijaVestor, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, then you may not access the service.
           </p>
 
           <h2>2. Description of Service</h2>
           <p>
-            NaijaList provides a business directory service that allows users to discover, review, and contact local businesses in Nigeria. Business owners can create accounts to list their businesses and interact with customers.
+            NaijaVestor provides a business directory service that allows users to discover, review, and contact local businesses in Nigeria. Business owners can create accounts to list their businesses and interact with customers.
           </p>
 
           <h2>3. User Accounts</h2>
@@ -50,7 +50,7 @@ export default function TermsOfServicePage() {
           <ul>
             <li>In any way that violates any applicable national or international law or regulation.</li>
             <li>To post fraudulent, misleading, or unauthorized business listings.</li>
-            <li>To impersonate or attempt to impersonate NaijaList, a NaijaList employee, another user, or any other person or entity.</li>
+            <li>To impersonate or attempt to impersonate NaijaVestor, a NaijaVestor employee, another user, or any other person or entity.</li>
             <li>To engage in any other conduct that restricts or inhibits anyone&apos;s use or enjoyment of the Service.</li>
           </ul>
 
@@ -61,7 +61,7 @@ export default function TermsOfServicePage() {
 
           <h2>7. Limitation of Liability</h2>
           <p>
-            In no event shall NaijaList, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
+            In no event shall NaijaVestor, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
           </p>
 
           <h2>8. Changes to Terms</h2>

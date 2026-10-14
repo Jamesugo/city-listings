@@ -20,6 +20,17 @@ export async function submitReview(formData: FormData) {
     return { error: 'Invalid review data' };
   }
 
+  // Prevent business owners from reviewing their own business
+  const { data: dbUser } = await supabase
+    .from('users')
+    .select('business_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (dbUser?.business_id === business_id) {
+    return { error: 'Business owners cannot submit reviews for their own business.' };
+  }
+
   await supabase.from('users').upsert(
     { id: user.id, email: user.email },
     { onConflict: 'id' }

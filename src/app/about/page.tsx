@@ -4,7 +4,7 @@ import styles from './page.module.css';
 
 export const metadata: Metadata = {
   title: 'About Us',
-  description: 'Learn about NaijaList, Nigeria&apos;s premier local business directory.',
+  description: 'Learn about NaijaVestor, Nigeria&apos;s premier local business directory.',
 };
 
 export default function AboutPage() {
@@ -12,7 +12,7 @@ export default function AboutPage() {
     <>
       <section className={styles.hero} aria-labelledby="about-heading">
         <div className="container">
-          <h1 id="about-heading" className={styles.title}>About NaijaList</h1>
+          <h1 id="about-heading" className={styles.title}>About NaijaVestor</h1>
           <p className={styles.subtitle}>Connecting Nigerians with trusted local businesses, one listing at a time.</p>
         </div>
       </section>
@@ -22,7 +22,7 @@ export default function AboutPage() {
           <div className={styles.textSection}>
             <h2>Our Mission</h2>
             <p>
-              At NaijaList, our mission is simple: to make it incredibly easy for anyone in Nigeria, starting right here in Enugu State, to find verified and trusted local businesses. We believe that small and medium-sized enterprises (SMEs) are the backbone of our economy, and our platform is designed to give them the visibility they deserve.
+              At NaijaVestor, our mission is simple: to make it incredibly easy for anyone in Nigeria, starting right here in Enugu State, to find verified and trusted local businesses. We believe that small and medium-sized enterprises (SMEs) are the backbone of our economy, and our platform is designed to give them the visibility they deserve.
             </p>
             
             <h2>Why Choose Us?</h2>
@@ -32,7 +32,7 @@ export default function AboutPage() {
 
             <h2>For Business Owners</h2>
             <p>
-              Getting listed on NaijaList means reaching more customers in your local area. We provide a beautiful, easy-to-use profile for your business where you can showcase your services, collect reviews, and grow your reputation. 
+              Getting listed on NaijaVestor means reaching more customers in your local area. We provide a beautiful, easy-to-use profile for your business where you can showcase your services, collect reviews, and grow your reputation. 
             </p>
 
             <div className={styles.ctaWrapper}>

@@ -4,13 +4,13 @@ import styles from './page.module.css';
 
 export const metadata: Metadata = {
   title: 'Frequently Asked Questions',
-  description: 'Find answers to common questions about NaijaList, business verification, and getting listed.',
+  description: 'Find answers to common questions about NaijaVestor, business verification, and getting listed.',
 };
 
 const faqs = [
   {
-    question: "Is it free to list my business on NaijaList?",
-    answer: "Yes! A basic business listing on NaijaList is completely free. We want to help as many local businesses as possible get discovered online."
+    question: "Is it free to list my business on NaijaVestor?",
+    answer: "Yes! A basic business listing on NaijaVestor is completely free. We want to help as many local businesses as possible get discovered online."
   },
   {
     question: "How do I get my business verified?",
@@ -25,8 +25,8 @@ const faqs = [
     answer: "Absolutely. Once you create an account and list your business, you can log in to your dashboard at any time to update your address, hours, photos, and services."
   },
   {
-    question: "Why should I use NaijaList instead of social media?",
-    answer: "While social media is great, NaijaList is specifically built for intent-driven search. When people come here, they are actively looking for a service to hire or a place to visit in their city. Plus, we organize everything neatly by category."
+    question: "Why should I use NaijaVestor instead of social media?",
+    answer: "While social media is great, NaijaVestor is specifically built for intent-driven search. When people come here, they are actively looking for a service to hire or a place to visit in their city. Plus, we organize everything neatly by category."
   }
 ];
 
@@ -36,7 +36,7 @@ export default function FAQPage() {
       <section className={styles.hero} aria-labelledby="faq-heading">
         <div className="container">
           <h1 id="faq-heading" className={styles.title}>Frequently Asked Questions</h1>
-          <p className={styles.subtitle}>Everything you need to know about NaijaList.</p>
+          <p className={styles.subtitle}>Everything you need to know about NaijaVestor.</p>
         </div>
       </section>
 

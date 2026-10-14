@@ -1,5 +1,5 @@
 // ============================================================
-// Mock data for NaijaList Phase 1
+// Mock data for NaijaVestor Phase 1
 // Seed city: Enugu State, Nigeria
 // Replace getBusinesses / getBusiness calls with Supabase queries
 // when the database is ready.

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Page Not Found',
-  description: 'This page does not exist. Browse NaijaList to find local businesses.',
+  description: 'This page does not exist. Browse NaijaVestor to find local businesses.',
 };
 
 export default function NotFound() {

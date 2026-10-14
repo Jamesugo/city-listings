@@ -6,7 +6,7 @@ import { MapPin } from '@/components/Icons';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
-  title: 'Browse by State & City — NaijaList Nigeria Directory',
+  title: 'Browse by State & City — NaijaVestor Nigeria Directory',
   description:
     'Browse local businesses by state and city across Nigeria. Find businesses in Lagos, Enugu, Abuja, Kano, Rivers and all 36 states.',
 };

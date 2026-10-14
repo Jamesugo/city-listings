@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { getBusinessBySlug, getRelatedBusinesses } from '@/lib/data';
@@ -43,9 +44,9 @@ export async function generateMetadata({
 
   return {
     title: `${biz.name} — ${biz.categoryName} in ${biz.cityName}`,
-    description: `Contact ${biz.name} on WhatsApp. Find address, hours, and reviews for this ${biz.categoryName.toLowerCase()} in ${biz.cityName}, ${biz.stateName}, Nigeria on NaijaList.`,
+    description: `Contact ${biz.name} on WhatsApp. Find address, hours, and reviews for this ${biz.categoryName.toLowerCase()} in ${biz.cityName}, ${biz.stateName}, Nigeria on NaijaVestor.`,
     openGraph: {
-      title: `${biz.name} | NaijaList`,
+      title: `${biz.name} | NaijaVestor`,
       description: biz.description.slice(0, 160),
       type: 'website',
     },
@@ -147,7 +148,7 @@ export default async function BusinessDetailPage({
     isOwner = ownerRecord?.business_id === biz.id;
   }
 
-  const waUrl = biz.whatsapp ? `https://wa.me/${biz.whatsapp}?text=Hello%20${encodeURIComponent(biz.name)}%2C%20I%20found%20you%20on%20NaijaList%20and%20would%20like%20to%20enquire%20about%20your%20services.` : null;
+  const waUrl = biz.whatsapp ? `https://wa.me/${biz.whatsapp}?text=Hello%20${encodeURIComponent(biz.name)}%2C%20I%20found%20you%20on%20NaijaVestor%20and%20would%20like%20to%20enquire%20about%20your%20services.` : null;
   const emoji = CATEGORY_EMOJI[biz.categorySlug] ?? '🏢';
 
   return (
@@ -188,9 +189,20 @@ export default async function BusinessDetailPage({
         <main className={styles.main}>
           {/* Hero image / placeholder */}
           <div className={styles.heroImage}>
-            <div className={styles.heroPlaceholder} aria-hidden="true">
-              <span className={styles.heroEmoji}>{emoji}</span>
-            </div>
+            {biz.coverImageUrl && !biz.coverImageUrl.startsWith('/images/placeholder') ? (
+              <Image
+                src={biz.coverImageUrl}
+                alt={`${biz.name} cover photo`}
+                fill
+                priority
+                style={{ objectFit: 'cover' }}
+                sizes="(max-width: 1024px) 100vw, 800px"
+              />
+            ) : (
+              <div className={styles.heroPlaceholder} aria-hidden="true">
+                <span className={styles.heroEmoji}>{emoji}</span>
+              </div>
+            )}
             {biz.isFeatured && (
             <span className={styles.featuredChip}><Star size={14} style={{ marginRight: '0.25rem' }} /> Featured</span>
             )}

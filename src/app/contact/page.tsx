@@ -3,7 +3,7 @@ import styles from './page.module.css';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
-  description: 'Get in touch with the NaijaList team. We&apos;re here to help.',
+  description: 'Get in touch with the NaijaVestor team. We&apos;re here to help.',
 };
 
 export default function ContactPage() {
@@ -41,7 +41,7 @@ export default function ContactPage() {
                 </span>
                 <div>
                   <strong>Email</strong>
-                  <p>hello@naijalist.com.ng</p>
+                  <p>hello@naijavestor.com.ng</p>
                 </div>
               </div>
               <div className={styles.method}>

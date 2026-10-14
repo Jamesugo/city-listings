@@ -59,10 +59,10 @@ export default function OwnerDashboard({
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const showToast = (type: 'success' | 'error', msg: string) => {
+  const showToast = useCallback((type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 4000);
-  };
+  }, []);
   
   const getStateIdForCity = useCallback((cityId?: string, fallbackStateId?: string) => {
     if (cityId) {
@@ -174,7 +174,7 @@ export default function OwnerDashboard({
         router.refresh();
       }
     });
-  }, [categories, editingId, formData, router]);
+  }, [categories, editingId, formData, router, showToast]);
 
   return (
     <div className={styles.page}>
@@ -493,8 +493,13 @@ export default function OwnerDashboard({
                             disabled={uploading}
                             onClick={async () => {
                               setUploading(true);
-                              await deleteMedia(coverPreview, editingId, 'cover');
-                              setCoverPreview(null);
+                              const res = await deleteMedia(coverPreview, editingId, 'cover');
+                              if (res?.error) {
+                                showToast('error', res.error);
+                              } else {
+                                setCoverPreview(null);
+                                showToast('success', 'Cover photo removed.');
+                              }
                               setUploading(false);
                             }}
                           >
@@ -537,8 +542,12 @@ export default function OwnerDashboard({
                               fd.append('businessId', editingId);
                               fd.append('mediaType', 'cover');
                               const res = await uploadMedia(fd);
-                              if (res.url) setCoverPreview(res.url);
-                              else if (res.error) showToast('error', res.error);
+                              if (res.url) {
+                                setCoverPreview(res.url);
+                                showToast('success', 'Cover photo uploaded successfully!');
+                              } else if (res.error) {
+                                showToast('error', res.error);
+                              }
                               setUploading(false);
                             }}
                           />
@@ -573,8 +582,13 @@ export default function OwnerDashboard({
                               disabled={uploading}
                               onClick={async () => {
                                 setUploading(true);
-                                await deleteMedia(url, editingId, 'gallery');
-                                setGalleryPreviews(prev => prev.filter(g => g !== url));
+                                const res = await deleteMedia(url, editingId, 'gallery');
+                                if (res?.error) {
+                                  showToast('error', res.error);
+                                } else {
+                                  setGalleryPreviews(prev => prev.filter(g => g !== url));
+                                  showToast('success', 'Photo removed from gallery.');
+                                }
                                 setUploading(false);
                               }}
                             >
@@ -607,14 +621,22 @@ export default function OwnerDashboard({
                                 }
                                 
                                 setUploading(true);
+                                let uploadCount = 0;
                                 for (let i = 0; i < filesToUpload.length; i++) {
                                   const fd = new FormData();
                                   fd.append('file', filesToUpload[i]);
                                   fd.append('businessId', editingId);
                                   fd.append('mediaType', 'gallery');
                                   const res = await uploadMedia(fd);
-                                  if (res.url) setGalleryPreviews(prev => [...prev, res.url!]);
-                                  else if (res.error) showToast('error', res.error);
+                                  if (res.url) {
+                                    setGalleryPreviews(prev => [...prev, res.url!]);
+                                    uploadCount++;
+                                  } else if (res.error) {
+                                    showToast('error', res.error);
+                                  }
+                                }
+                                if (uploadCount > 0) {
+                                  showToast('success', `${uploadCount} photo${uploadCount > 1 ? 's' : ''} uploaded to gallery!`);
                                 }
                                 setUploading(false);
                               }}
@@ -640,7 +662,7 @@ export default function OwnerDashboard({
             {activeTab === 'myprofile' && hasBusiness && (() => {
               const biz = businesses[0];
               const waUrl = biz.whatsapp
-                ? `https://wa.me/${biz.whatsapp}?text=Hello%20${encodeURIComponent(biz.name)}%2C%20I%20found%20you%20on%20NaijaList!`
+                ? `https://wa.me/${biz.whatsapp}?text=Hello%20${encodeURIComponent(biz.name)}%2C%20I%20found%20you%20on%20NaijaVestor!`
                 : null;
               const views = biz.pageViews || 0;
               const waClicks = biz.whatsappClicks || 0;
@@ -657,7 +679,7 @@ export default function OwnerDashboard({
                 <>
                   <div className={styles.sectionHeader}>
                     <h1 className={styles.sectionTitle}>My Public Profile</h1>
-                    <p className={styles.sectionSubtitle}>This is exactly how customers see your business on NaijaList.</p>
+                    <p className={styles.sectionSubtitle}>This is exactly how customers see your business on NaijaVestor.</p>
                   </div>
 
                   {/* Quick actions bar */}
@@ -825,7 +847,7 @@ export default function OwnerDashboard({
                 <>
                   <div className={styles.sectionHeader}>
                     <h1 className={styles.sectionTitle}>Analytics & Insights</h1>
-                    <p className={styles.sectionSubtitle}>See how your listing is performing on NaijaList.</p>
+                    <p className={styles.sectionSubtitle}>See how your listing is performing on NaijaVestor.</p>
                   </div>
 
                   {/* KPI Cards */}
