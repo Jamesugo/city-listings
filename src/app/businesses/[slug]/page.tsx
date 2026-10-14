@@ -197,6 +197,7 @@ export default async function BusinessDetailPage({
                 priority
                 style={{ objectFit: 'cover' }}
                 sizes="(max-width: 1024px) 100vw, 800px"
+                unoptimized={biz.coverImageUrl?.startsWith('data:')}
               />
             ) : (
               <div className={styles.heroPlaceholder} aria-hidden="true">

@@ -2,8 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import fs from 'fs/promises';
-import path from 'path';
 
 const BUCKET = 'business-media';
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -28,7 +26,7 @@ export async function uploadMedia(formData: FormData) {
   }
 
   const extension = getSafeFileExtension(file.name);
-  const contentType = file.type || '';
+  const contentType = file.type || 'image/jpeg';
   if (file.size > MAX_FILE_SIZE) {
     return { error: 'File too large. Maximum size is 50MB.' };
   }
@@ -84,25 +82,22 @@ export async function uploadMedia(formData: FormData) {
       const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
       publicUrl = urlData.publicUrl;
     } else {
-      console.warn('Supabase storage upload failed, saving to local fallback storage:', uploadError?.message);
+      console.warn('Supabase storage upload bypassed:', uploadError?.message);
     }
   } catch (err) {
     console.warn('Supabase storage upload exception:', err);
   }
 
-  // 2. Fallback to local storage if Supabase storage is not configured or failed
+  // 2. Resilient Base64 Fallback (works on Vercel without storage bucket or filesystem write)
   if (!publicUrl) {
     try {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', safeBusinessId);
-      await fs.mkdir(uploadDir, { recursive: true });
-      const localFilePath = path.join(uploadDir, `${mediaType}-${timestamp}.${ext}`);
-      await fs.writeFile(localFilePath, buffer);
-      publicUrl = `/uploads/${safeBusinessId}/${mediaType}-${timestamp}.${ext}`;
-    } catch (fsErr) {
-      console.error('Failed to save file to local fallback:', fsErr);
-      return { error: 'Unable to save the uploaded image. Please try again.' };
+      const mime = contentType || 'image/jpeg';
+      publicUrl = `data:${mime};base64,${buffer.toString('base64')}`;
+    } catch (conversionErr) {
+      console.error('Buffer conversion error:', conversionErr);
+      return { error: 'Failed to process the uploaded image.' };
     }
   }
 
@@ -174,15 +169,8 @@ export async function deleteMedia(url: string, businessId: string, mediaType: 'c
     return { error: 'Unauthorized: You can only delete media from your own business.' };
   }
 
-  // Handle local file deletion vs Supabase storage deletion
-  if (url.startsWith('/uploads/')) {
-    try {
-      const localFilePath = path.join(process.cwd(), 'public', url);
-      await fs.unlink(localFilePath);
-    } catch {
-      // ignore if file already removed
-    }
-  } else {
+  // Handle Supabase cloud storage removal (if not a data URL)
+  if (!url.startsWith('data:')) {
     try {
       const bucketUrl = supabase.storage.from(BUCKET).getPublicUrl('').data.publicUrl;
       const filePath = url.replace(bucketUrl, '').replace(/^\/+/, '');

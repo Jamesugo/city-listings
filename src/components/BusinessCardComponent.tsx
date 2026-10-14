@@ -63,6 +63,7 @@ export default function BusinessCardComponent({ business, priority = false }: Pr
               className={styles.image}
               priority={priority}
               loading={priority ? 'eager' : 'lazy'}
+              unoptimized={business.coverImageUrl?.startsWith('data:')}
             />
           ) : (
             <div className={styles.imagePlaceholder} aria-hidden="true">

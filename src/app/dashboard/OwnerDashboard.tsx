@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { Business, Category, City, State } from '@/lib/types';
 import { upsertBusiness } from '../admin/actions';
 import { uploadMedia, deleteMedia } from '../admin/upload';
+import { compressImage } from '@/lib/image-compress';
 import { logout } from '../admin/login/actions';
 import styles from './dashboard.module.css';
 import { NIGERIAN_STATES } from '@/lib/nigerianStates';
@@ -85,7 +86,8 @@ export default function OwnerDashboard({
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>(
     hasBusiness ? businesses[0].gallery || [] : []
   );
-  const [uploading, setUploading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
@@ -486,61 +488,51 @@ export default function OwnerDashboard({
                       
                       {coverPreview ? (
                         <div className={styles.mediaPreview} style={{ maxWidth: '300px' }}>
-                          <Image src={coverPreview} alt="Cover" width={1200} height={800} />
+                          <Image
+                            src={coverPreview}
+                            alt="Cover"
+                            width={1200}
+                            height={800}
+                            unoptimized={coverPreview.startsWith('data:')}
+                          />
                           <button
                             type="button"
                             className={styles.deleteOverlay}
-                            disabled={uploading}
+                            disabled={uploadingCover}
                             onClick={async () => {
-                              setUploading(true);
-                              const res = await deleteMedia(coverPreview, editingId, 'cover');
-                              if (res?.error) {
-                                showToast('error', res.error);
-                              } else {
-                                setCoverPreview(null);
-                                showToast('success', 'Cover photo removed.');
+                              setUploadingCover(true);
+                              try {
+                                const res = await deleteMedia(coverPreview, editingId, 'cover');
+                                if (res?.error) {
+                                  showToast('error', res.error);
+                                } else {
+                                  setCoverPreview(null);
+                                  showToast('success', 'Cover photo removed.');
+                                }
+                              } catch (err: any) {
+                                showToast('error', err?.message || 'Failed to remove cover photo.');
+                              } finally {
+                                setUploadingCover(false);
                               }
-                              setUploading(false);
                             }}
                           >
-                            <Trash2 size={24} /> <span>Remove Cover Image</span>
+                            <Trash2 size={24} /> <span>{uploadingCover ? 'Removing...' : 'Remove Cover Image'}</span>
                           </button>
                         </div>
                       ) : (
                         <div
                           className={styles.dropzone}
-                          onClick={() => coverInputRef.current?.click()}
+                          onClick={() => !uploadingCover && coverInputRef.current?.click()}
                           onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add(styles.dropzoneActive); }}
                           onDragLeave={(e) => e.currentTarget.classList.remove(styles.dropzoneActive)}
                           onDrop={async (e) => {
                             e.preventDefault();
                             e.currentTarget.classList.remove(styles.dropzoneActive);
-                            const file = e.dataTransfer.files[0];
-                            if (!file) return;
-                            setUploading(true);
-                            const fd = new FormData();
-                            fd.append('file', file);
-                            fd.append('businessId', editingId);
-                            fd.append('mediaType', 'cover');
-                            const res = await uploadMedia(fd);
-                            if (res.url) {
-                              setCoverPreview(res.url);
-                              showToast('success', 'Cover photo uploaded successfully!');
-                            } else if (res.error) {
-                              showToast('error', res.error);
-                            }
-                            setUploading(false);
-                          }}
-                        >
-                          <input
-                            ref={coverInputRef}
-                            type="file"
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              setUploading(true);
+                            const rawFile = e.dataTransfer.files[0];
+                            if (!rawFile || uploadingCover) return;
+                            setUploadingCover(true);
+                            try {
+                              const file = await compressImage(rawFile);
                               const fd = new FormData();
                               fd.append('file', file);
                               fd.append('businessId', editingId);
@@ -552,13 +544,47 @@ export default function OwnerDashboard({
                               } else if (res.error) {
                                 showToast('error', res.error);
                               }
-                              setUploading(false);
+                            } catch (err: any) {
+                              showToast('error', err?.message || 'Upload failed. Please try again.');
+                            } finally {
+                              setUploadingCover(false);
+                            }
+                          }}
+                        >
+                          <input
+                            ref={coverInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            style={{ display: 'none' }}
+                            onChange={async (e) => {
+                              const rawFile = e.target.files?.[0];
+                              if (!rawFile || uploadingCover) return;
+                              setUploadingCover(true);
+                              try {
+                                const file = await compressImage(rawFile);
+                                const fd = new FormData();
+                                fd.append('file', file);
+                                fd.append('businessId', editingId);
+                                fd.append('mediaType', 'cover');
+                                const res = await uploadMedia(fd);
+                                if (res.url) {
+                                  setCoverPreview(res.url);
+                                  showToast('success', 'Cover photo uploaded successfully!');
+                                } else if (res.error) {
+                                  showToast('error', res.error);
+                                }
+                              } catch (err: any) {
+                                showToast('error', err?.message || 'Upload failed. Please try again.');
+                              } finally {
+                                setUploadingCover(false);
+                                if (coverInputRef.current) coverInputRef.current.value = '';
+                              }
                             }}
                           />
                           <div className={styles.dropzoneContent}>
-                            {uploading ? <Loader2 size={32} className="animate-spin" /> : <ImagePlus size={32} />}
-                            <p>{uploading ? 'Uploading...' : 'Click or drag to upload cover image'}</p>
-                            <small>Max 50MB • JPG, PNG, WebP</small>
+                            {uploadingCover ? <Loader2 size={32} className="animate-spin" /> : <ImagePlus size={32} />}
+                            <p>{uploadingCover ? 'Uploading cover...' : 'Click or drag to upload cover image'}</p>
+                            <small>Max 50MB • JPG, PNG, WebP (auto-optimized)</small>
                           </div>
                         </div>
                       )}
@@ -578,22 +604,33 @@ export default function OwnerDashboard({
                             {url.match(/\.(mp4|webm|mov)$/i) ? (
                               <video src={url} controls />
                             ) : (
-                              <Image src={url} alt={`Gallery ${i + 1}`} width={1200} height={800} />
+                              <Image
+                                src={url}
+                                alt={`Gallery ${i + 1}`}
+                                width={1200}
+                                height={800}
+                                unoptimized={url.startsWith('data:')}
+                              />
                             )}
                             <button
                               type="button"
                               className={styles.deleteOverlay}
-                              disabled={uploading}
+                              disabled={uploadingGallery}
                               onClick={async () => {
-                                setUploading(true);
-                                const res = await deleteMedia(url, editingId, 'gallery');
-                                if (res?.error) {
-                                  showToast('error', res.error);
-                                } else {
-                                  setGalleryPreviews(prev => prev.filter(g => g !== url));
-                                  showToast('success', 'Photo removed from gallery.');
+                                setUploadingGallery(true);
+                                try {
+                                  const res = await deleteMedia(url, editingId, 'gallery');
+                                  if (res?.error) {
+                                    showToast('error', res.error);
+                                  } else {
+                                    setGalleryPreviews(prev => prev.filter(g => g !== url));
+                                    showToast('success', 'Photo removed from gallery.');
+                                  }
+                                } catch (err: any) {
+                                  showToast('error', err?.message || 'Failed to remove gallery photo.');
+                                } finally {
+                                  setUploadingGallery(false);
                                 }
-                                setUploading(false);
                               }}
                             >
                               <Trash2 size={24} />
@@ -605,7 +642,7 @@ export default function OwnerDashboard({
                           <div
                             className={styles.dropzone}
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '140px', padding: '1rem' }}
-                            onClick={() => galleryInputRef.current?.click()}
+                            onClick={() => !uploadingGallery && galleryInputRef.current?.click()}
                           >
                             <input
                               ref={galleryInputRef}
@@ -615,7 +652,7 @@ export default function OwnerDashboard({
                               style={{ display: 'none' }}
                               onChange={async (e) => {
                                 const files = e.target.files;
-                                if (!files) return;
+                                if (!files || files.length === 0 || uploadingGallery) return;
                                 
                                 const maxAllowed = businesses[0]?.subscriptionTier === 'free' ? 5 - galleryPreviews.length : files.length;
                                 const filesToUpload = Array.from(files).slice(0, maxAllowed);
@@ -624,30 +661,43 @@ export default function OwnerDashboard({
                                   showToast('error', 'Free tier is limited to 5 photos. Upgrade for more.');
                                 }
                                 
-                                setUploading(true);
-                                let uploadCount = 0;
-                                for (let i = 0; i < filesToUpload.length; i++) {
-                                  const fd = new FormData();
-                                  fd.append('file', filesToUpload[i]);
-                                  fd.append('businessId', editingId);
-                                  fd.append('mediaType', 'gallery');
-                                  const res = await uploadMedia(fd);
-                                  if (res.url) {
-                                    setGalleryPreviews(prev => [...prev, res.url!]);
-                                    uploadCount++;
-                                  } else if (res.error) {
-                                    showToast('error', res.error);
+                                if (filesToUpload.length === 0) return;
+
+                                setUploadingGallery(true);
+                                try {
+                                  let uploadCount = 0;
+                                  for (let i = 0; i < filesToUpload.length; i++) {
+                                    try {
+                                      const compressed = await compressImage(filesToUpload[i]);
+                                      const fd = new FormData();
+                                      fd.append('file', compressed);
+                                      fd.append('businessId', editingId);
+                                      fd.append('mediaType', 'gallery');
+                                      const res = await uploadMedia(fd);
+                                      if (res.url) {
+                                        setGalleryPreviews(prev => [...prev, res.url!]);
+                                        uploadCount++;
+                                      } else if (res.error) {
+                                        showToast('error', res.error);
+                                      }
+                                    } catch (singleErr: any) {
+                                      showToast('error', singleErr?.message || `Failed to process image ${i + 1}`);
+                                    }
                                   }
+                                  if (uploadCount > 0) {
+                                    showToast('success', `${uploadCount} photo${uploadCount > 1 ? 's' : ''} uploaded to gallery!`);
+                                  }
+                                } catch (err: any) {
+                                  showToast('error', err?.message || 'Gallery upload encountered an error.');
+                                } finally {
+                                  setUploadingGallery(false);
+                                  if (galleryInputRef.current) galleryInputRef.current.value = '';
                                 }
-                                if (uploadCount > 0) {
-                                  showToast('success', `${uploadCount} photo${uploadCount > 1 ? 's' : ''} uploaded to gallery!`);
-                                }
-                                setUploading(false);
                               }}
                             />
                             <div className={styles.dropzoneContent}>
-                              {uploading ? <Loader2 size={24} className="animate-spin" /> : <ImagePlus size={24} />}
-                              <p style={{ fontSize: '0.85rem' }}>{uploading ? '...' : 'Add More'}</p>
+                              {uploadingGallery ? <Loader2 size={24} className="animate-spin" /> : <ImagePlus size={24} />}
+                              <p style={{ fontSize: '0.85rem' }}>{uploadingGallery ? 'Uploading...' : 'Add More'}</p>
                             </div>
                           </div>
                         ) : (
@@ -720,7 +770,14 @@ export default function OwnerDashboard({
                     {/* Cover image */}
                     <div style={{ position: 'relative', height: '200px', background: biz.coverImageUrl ? 'transparent' : 'linear-gradient(135deg, var(--color-primary-light), var(--color-primary))' }}>
                       {biz.coverImageUrl ? (
-                        <Image src={biz.coverImageUrl} alt={biz.name} width={1200} height={800} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <Image
+                          src={biz.coverImageUrl}
+                          alt={biz.name}
+                          width={1200}
+                          height={800}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          unoptimized={biz.coverImageUrl.startsWith('data:')}
+                        />
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-primary-dark)', gap: '0.5rem' }}>
                           <ImagePlus size={40} style={{ opacity: 0.6 }} />
@@ -802,7 +859,14 @@ export default function OwnerDashboard({
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 'var(--space-3)' }}>
                         {biz.gallery.map((url, i) => (
                           <div key={i} style={{ aspectRatio: '1', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border-light)' }}>
-                            <Image src={url} alt={`Media ${i + 1}`} width={1200} height={800} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <Image
+                              src={url}
+                              alt={`Media ${i + 1}`}
+                              width={1200}
+                              height={800}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              unoptimized={url.startsWith('data:')}
+                            />
                           </div>
                         ))}
                       </div>

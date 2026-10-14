@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import type { Business, Category, City, State } from '@/lib/types';
 import { upsertBusiness, deleteBusiness, toggleFeatured } from './actions';
 import { uploadMedia, deleteMedia } from './upload';
+import { compressImage } from '@/lib/image-compress';
 import { logout } from './login/actions';
 import styles from './page.module.css';
 import { NIGERIAN_STATES } from '@/lib/nigerianStates';
-import { Plus, ImagePlus, Trash2, X, Star, CheckCircle, Phone, Landmark, Eye, Edit2 } from '@/components/Icons';
+import { Plus, ImagePlus, Trash2, X, Star, CheckCircle, Phone, Landmark, Eye, Edit2, Loader2 } from '@/components/Icons';
 
 export default function AdminDashboard({
   initialBusinesses,
@@ -452,16 +453,28 @@ export default function AdminDashboard({
                       <label className="form-label">Cover Image</label>
                       {coverPreview ? (
                         <div className={styles.coverPreview}>
-                          <Image src={coverPreview} alt="Cover" className={styles.coverImg} width={1200} height={800} />
+                          <Image
+                            src={coverPreview}
+                            alt="Cover"
+                            className={styles.coverImg}
+                            width={1200}
+                            height={800}
+                            unoptimized={coverPreview.startsWith('data:')}
+                          />
                           <button
                             type="button"
                             className={styles.deleteOverlay}
                             disabled={uploading}
                             onClick={async () => {
                               setUploading(true);
-                              await deleteMedia(coverPreview, editingId, 'cover');
-                              setCoverPreview(null);
-                              setUploading(false);
+                              try {
+                                await deleteMedia(coverPreview, editingId, 'cover');
+                                setCoverPreview(null);
+                              } catch (err: any) {
+                                alert(err?.message || 'Failed to remove cover image');
+                              } finally {
+                                setUploading(false);
+                              }
                             }}
                           >
                             <Trash2 size={16} /> Remove
@@ -470,34 +483,17 @@ export default function AdminDashboard({
                       ) : (
                         <div
                           className={styles.dropzone}
-                          onClick={() => coverInputRef.current?.click()}
+                          onClick={() => !uploading && coverInputRef.current?.click()}
                           onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add(styles.dropzoneActive); }}
                           onDragLeave={(e) => e.currentTarget.classList.remove(styles.dropzoneActive)}
                           onDrop={async (e) => {
                             e.preventDefault();
                             e.currentTarget.classList.remove(styles.dropzoneActive);
-                            const file = e.dataTransfer.files[0];
-                            if (!file) return;
+                            const rawFile = e.dataTransfer.files[0];
+                            if (!rawFile || uploading) return;
                             setUploading(true);
-                            const fd = new FormData();
-                            fd.append('file', file);
-                            fd.append('businessId', editingId);
-                            fd.append('mediaType', 'cover');
-                            const res = await uploadMedia(fd);
-                            if (res.url) setCoverPreview(res.url);
-                            else if (res.error) alert(res.error);
-                            setUploading(false);
-                          }}
-                        >
-                          <input
-                            ref={coverInputRef}
-                            type="file"
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              setUploading(true);
+                            try {
+                              const file = await compressImage(rawFile);
                               const fd = new FormData();
                               fd.append('file', file);
                               fd.append('businessId', editingId);
@@ -505,13 +501,43 @@ export default function AdminDashboard({
                               const res = await uploadMedia(fd);
                               if (res.url) setCoverPreview(res.url);
                               else if (res.error) alert(res.error);
+                            } catch (err: any) {
+                              alert(err?.message || 'Upload failed');
+                            } finally {
                               setUploading(false);
+                            }
+                          }}
+                        >
+                          <input
+                            ref={coverInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            style={{ display: 'none' }}
+                            onChange={async (e) => {
+                              const rawFile = e.target.files?.[0];
+                              if (!rawFile || uploading) return;
+                              setUploading(true);
+                              try {
+                                const file = await compressImage(rawFile);
+                                const fd = new FormData();
+                                fd.append('file', file);
+                                fd.append('businessId', editingId);
+                                fd.append('mediaType', 'cover');
+                                const res = await uploadMedia(fd);
+                                if (res.url) setCoverPreview(res.url);
+                                else if (res.error) alert(res.error);
+                              } catch (err: any) {
+                                alert(err?.message || 'Upload failed');
+                              } finally {
+                                setUploading(false);
+                                if (coverInputRef.current) coverInputRef.current.value = '';
+                              }
                             }}
                           />
                           <div className={styles.dropzoneContent}>
-                            <span style={{ fontSize: '2rem' }}><ImagePlus size={32} /></span>
+                            <span style={{ fontSize: '2rem' }}>{uploading ? <Loader2 size={32} className="animate-spin" /> : <ImagePlus size={32} />}</span>
                             <p>{uploading ? 'Uploading...' : 'Click or drag to upload a cover image'}</p>
-                            <small>Max 50MB • JPG, PNG, WebP</small>
+                            <small>Max 50MB • JPG, PNG, WebP (auto-optimized)</small>
                           </div>
                         </div>
                       )}
@@ -526,7 +552,14 @@ export default function AdminDashboard({
                             {url.match(/\.(mp4|webm|mov)$/i) ? (
                               <video src={url} className={styles.galleryThumb} controls />
                             ) : (
-                              <Image src={url} alt={`Gallery ${i + 1}`} className={styles.galleryThumb} width={1200} height={800} />
+                              <Image
+                                src={url}
+                                alt={`Gallery ${i + 1}`}
+                                className={styles.galleryThumb}
+                                width={1200}
+                                height={800}
+                                unoptimized={url.startsWith('data:')}
+                              />
                             )}
                             <button
                               type="button"
@@ -534,9 +567,14 @@ export default function AdminDashboard({
                               disabled={uploading}
                               onClick={async () => {
                                 setUploading(true);
-                                await deleteMedia(url, editingId, 'gallery');
-                                setGalleryPreviews(prev => prev.filter(g => g !== url));
-                                setUploading(false);
+                                try {
+                                  await deleteMedia(url, editingId, 'gallery');
+                                  setGalleryPreviews(prev => prev.filter(g => g !== url));
+                                } catch (err: any) {
+                                  alert(err?.message || 'Failed to delete gallery item');
+                                } finally {
+                                  setUploading(false);
+                                }
                               }}
                             >
                               <X size={16} />
@@ -546,32 +584,41 @@ export default function AdminDashboard({
                         {/* Add more button */}
                         <div
                           className={styles.galleryAdd}
-                          onClick={() => galleryInputRef.current?.click()}
+                          onClick={() => !uploading && galleryInputRef.current?.click()}
                         >
                           <input
                             ref={galleryInputRef}
                             type="file"
-                            accept="image/*,video/*"
+                            accept="image/jpeg,image/png,image/webp"
                             multiple
                             style={{ display: 'none' }}
                             onChange={async (e) => {
                               const files = e.target.files;
-                              if (!files) return;
+                              if (!files || files.length === 0 || uploading) return;
                               setUploading(true);
-                              for (let i = 0; i < files.length; i++) {
-                                const fd = new FormData();
-                                fd.append('file', files[i]);
-                                fd.append('businessId', editingId);
-                                fd.append('mediaType', 'gallery');
-                                const res = await uploadMedia(fd);
-                                if (res.url) setGalleryPreviews(prev => [...prev, res.url!]);
-                                else if (res.error) alert(res.error);
+                              try {
+                                for (let i = 0; i < files.length; i++) {
+                                  try {
+                                    const compressed = await compressImage(files[i]);
+                                    const fd = new FormData();
+                                    fd.append('file', compressed);
+                                    fd.append('businessId', editingId);
+                                    fd.append('mediaType', 'gallery');
+                                    const res = await uploadMedia(fd);
+                                    if (res.url) setGalleryPreviews(prev => [...prev, res.url!]);
+                                    else if (res.error) alert(res.error);
+                                  } catch (fileErr: any) {
+                                    alert(fileErr?.message || `Failed to process image ${i + 1}`);
+                                  }
+                                }
+                              } finally {
+                                setUploading(false);
+                                if (galleryInputRef.current) galleryInputRef.current.value = '';
                               }
-                              setUploading(false);
                             }}
                           />
-                          <span style={{ fontSize: '1.5rem' }}>{uploading ? '<Loader2 size={24} className="animate-spin" />' : '<Plus size={24} />'}</span>
-                          <small>Add photos/videos</small>
+                          <span style={{ fontSize: '1.5rem' }}>{uploading ? <Loader2 size={24} className="animate-spin" /> : <Plus size={24} />}</span>
+                          <small>Add photos</small>
                         </div>
                       </div>
                     </div>
