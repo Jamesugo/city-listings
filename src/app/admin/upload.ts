@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import fs from 'fs/promises';
+import path from 'path';
 
 const BUCKET = 'business-media';
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -17,8 +19,8 @@ export async function uploadMedia(formData: FormData) {
   const businessId = formData.get('businessId') as string | null;
   const mediaType = formData.get('mediaType') as string | null; // 'cover' | 'gallery'
 
-  if (!file || !businessId) {
-    return { error: 'Missing file or business ID' };
+  if (!file || !businessId || businessId === 'null' || businessId === 'undefined') {
+    return { error: 'Please save the business profile before uploading photos.' };
   }
 
   if (!['cover', 'gallery'].includes(mediaType || '')) {
@@ -37,61 +39,96 @@ export async function uploadMedia(formData: FormData) {
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
+  if (!user) return { error: 'Not authenticated. Please sign in.' };
 
-  const { data: dbUser, error: userLookupError } = await supabase
+  const adminEmails = [
+    ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || []),
+    ...(process.env.ADMIN_EMAILS?.split(',') || []),
+  ].map((e) => e.trim().toLowerCase()).filter(Boolean);
+
+  const { data: dbUser } = await supabase
     .from('users')
     .select('role, business_id')
     .eq('id', user.id)
     .maybeSingle();
 
-  if (userLookupError) {
-    console.error('Error fetching user profile for upload:', userLookupError);
-    return { error: 'Could not verify your account permissions.' };
-  }
+  const isAdmin = (user.email && adminEmails.includes(user.email.toLowerCase())) || dbUser?.role === 'admin';
 
-  const role = dbUser?.role || 'owner';
-  if (role === 'owner' && dbUser?.business_id !== businessId) {
+  if (!isAdmin && dbUser?.business_id && dbUser.business_id !== businessId) {
     return { error: 'Unauthorized: You can only upload media for your own business.' };
   }
 
-  // Generate a unique filename
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const timestamp = Date.now();
-  const fileName = `${businessId}/${mediaType}-${timestamp}.${ext}`;
-
-  // Upload to Supabase Storage
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error('Upload error:', uploadError);
-    return { error: uploadError.message };
+  // If user does not have business_id linked yet, link it
+  if (!isAdmin && !dbUser?.business_id) {
+    await supabase.from('users').update({ business_id: businessId }).eq('id', user.id);
   }
 
-  // Get the public URL
-  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
-  const publicUrl = urlData.publicUrl;
+  // Generate a safe unique filename
+  const ext = extension || 'jpg';
+  const timestamp = Date.now();
+  const safeBusinessId = businessId.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fileName = `${safeBusinessId}/${mediaType}-${timestamp}.${ext}`;
 
-  // Update the business record
+  let publicUrl = '';
+
+  // 1. Attempt to upload to Supabase Storage
+  try {
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (!uploadError && uploadData) {
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
+      publicUrl = urlData.publicUrl;
+    } else {
+      console.warn('Supabase storage upload failed, saving to local fallback storage:', uploadError?.message);
+    }
+  } catch (err) {
+    console.warn('Supabase storage upload exception:', err);
+  }
+
+  // 2. Fallback to local storage if Supabase storage is not configured or failed
+  if (!publicUrl) {
+    try {
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', safeBusinessId);
+      await fs.mkdir(uploadDir, { recursive: true });
+      const localFilePath = path.join(uploadDir, `${mediaType}-${timestamp}.${ext}`);
+      await fs.writeFile(localFilePath, buffer);
+      publicUrl = `/uploads/${safeBusinessId}/${mediaType}-${timestamp}.${ext}`;
+    } catch (fsErr) {
+      console.error('Failed to save file to local fallback:', fsErr);
+      return { error: 'Unable to save the uploaded image. Please try again.' };
+    }
+  }
+
+  // 3. Update the business record in the database
   if (mediaType === 'cover') {
     const { error: dbError } = await supabase
       .from('businesses')
       .update({ cover_image_url: publicUrl })
       .eq('id', businessId);
 
-    if (dbError) return { error: dbError.message };
+    if (dbError) {
+      console.error('DB update error for cover image:', dbError);
+      return { error: dbError.message };
+    }
   } else {
     // Gallery: append to the existing array
-    const { data: biz } = await supabase
+    const { data: biz, error: fetchError } = await supabase
       .from('businesses')
       .select('gallery')
       .eq('id', businessId)
       .single();
+
+    if (fetchError) {
+      console.error('DB fetch error for gallery:', fetchError);
+      return { error: fetchError.message };
+    }
 
     const currentGallery = biz?.gallery || [];
     const { error: dbError } = await supabase
@@ -99,7 +136,10 @@ export async function uploadMedia(formData: FormData) {
       .update({ gallery: [...currentGallery, publicUrl] })
       .eq('id', businessId);
 
-    if (dbError) return { error: dbError.message };
+    if (dbError) {
+      console.error('DB update error for gallery:', dbError);
+      return { error: dbError.message };
+    }
   }
 
   revalidatePath('/admin');
@@ -109,36 +149,52 @@ export async function uploadMedia(formData: FormData) {
 }
 
 export async function deleteMedia(url: string, businessId: string, mediaType: 'cover' | 'gallery') {
+  if (!businessId || businessId === 'null' || businessId === 'undefined') {
+    return { error: 'Invalid business ID.' };
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not authenticated' };
 
-  const { data: dbUser, error: userLookupError } = await supabase
+  const adminEmails = [
+    ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || []),
+    ...(process.env.ADMIN_EMAILS?.split(',') || []),
+  ].map((e) => e.trim().toLowerCase()).filter(Boolean);
+
+  const { data: dbUser } = await supabase
     .from('users')
     .select('role, business_id')
     .eq('id', user.id)
     .maybeSingle();
 
-  if (userLookupError) {
-    console.error('Error fetching user profile for delete media:', userLookupError);
-    return { error: 'Could not verify your account permissions.' };
-  }
+  const isAdmin = (user.email && adminEmails.includes(user.email.toLowerCase())) || dbUser?.role === 'admin';
 
-  const role = dbUser?.role || 'owner';
-  if (role === 'owner' && dbUser?.business_id !== businessId) {
+  if (!isAdmin && dbUser?.business_id !== businessId) {
     return { error: 'Unauthorized: You can only delete media from your own business.' };
   }
 
-  // Extract the file path from the URL
-  const bucketUrl = supabase.storage.from(BUCKET).getPublicUrl('').data.publicUrl;
-  const filePath = url.replace(bucketUrl, '');
-
-  if (filePath) {
-    // Delete from storage (non-fatal if it fails)
-    await supabase.storage.from(BUCKET).remove([filePath]);
+  // Handle local file deletion vs Supabase storage deletion
+  if (url.startsWith('/uploads/')) {
+    try {
+      const localFilePath = path.join(process.cwd(), 'public', url);
+      await fs.unlink(localFilePath);
+    } catch {
+      // ignore if file already removed
+    }
+  } else {
+    try {
+      const bucketUrl = supabase.storage.from(BUCKET).getPublicUrl('').data.publicUrl;
+      const filePath = url.replace(bucketUrl, '').replace(/^\/+/, '');
+      if (filePath) {
+        await supabase.storage.from(BUCKET).remove([filePath]);
+      }
+    } catch (storageErr) {
+      console.warn('Storage delete warning:', storageErr);
+    }
   }
 
-  // Update the business record
+  // Update database record
   if (mediaType === 'cover') {
     await supabase
       .from('businesses')

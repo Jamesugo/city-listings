@@ -523,8 +523,12 @@ export default function OwnerDashboard({
                             fd.append('businessId', editingId);
                             fd.append('mediaType', 'cover');
                             const res = await uploadMedia(fd);
-                            if (res.url) setCoverPreview(res.url);
-                            else if (res.error) showToast('error', res.error);
+                            if (res.url) {
+                              setCoverPreview(res.url);
+                              showToast('success', 'Cover photo uploaded successfully!');
+                            } else if (res.error) {
+                              showToast('error', res.error);
+                            }
                             setUploading(false);
                           }}
                         >
